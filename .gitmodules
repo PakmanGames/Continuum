@@ -1,3 +1,6 @@
 [submodule "examples/demo-1"]
 	path = examples/demo-1
 	url = git@github.com:PakmanGames/continiuum-continued-demo.git
+[submodule "original-repo"]
+	path = original-repo
+	url = https://github.com/sokosam/HW12.git
