@@ -1,0 +1,3 @@
+[submodule "examples/demo-1"]
+	path = examples/demo-1
+	url = git@github.com:PakmanGames/continiuum-continued-demo.git
