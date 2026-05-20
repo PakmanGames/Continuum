@@ -5,6 +5,11 @@ import { users } from "~/server/db/schema";
 import { PageTransition } from "../_components/page-transition";
 import { UsersClient } from "./_components/users-client";
 
+// Render on each request instead of prerendering at build time: this page reads
+// live user data and mutates it via server actions, so a build-time static
+// snapshot would be stale and would make the build depend on DB reachability.
+export const dynamic = "force-dynamic";
+
 async function createUser(formData: FormData) {
   "use server";
 
