@@ -1,6 +1,6 @@
 [submodule "examples/demo-1"]
 	path = examples/demo-1
 	url = https://github.com/PakmanGames/continuum-continued-demo.git
-[submodule "original-repo"]
-	path = original-repo
+[submodule "original-hackathon-repo"]
+	path = original-hackathon-repo
 	url = https://github.com/sokosam/HW12.git
