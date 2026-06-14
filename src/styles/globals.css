@@ -1,102 +1,186 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans:
-    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+/* ==========================================================================
+   Continiuum design tokens
+   Dark is the default (:root) for the app dashboard. The marketing landing
+   page opts into light by setting [data-theme="light"] on a wrapper. Semantic
+   vars below flip per theme; @theme inline maps them onto Tailwind utilities
+   (bg-surface, text-fg, text-accent, …) so those utilities flip too.
+   Accent: electric indigo/violet. Signature motif: the heartbeat/pulse.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg: #0a0c11;
+  --surface: #12151d;
+  --surface-2: #191d28;
+  --elevated: #1e2330;
+
+  /* Lines */
+  --border: #232a37;
+  --border-strong: #313a4b;
+
+  /* Text */
+  --fg: #e9edf6;
+  --muted: #9aa5b8;
+  --subtle: #6c7689;
+
+  /* Brand accent */
+  --accent: #7b6cff;
+  --accent-strong: #6455f5;
+  --accent-contrast: #ffffff;
+
+  /* Semantic */
+  --success: #35d07f;
+  --warning: #f2b23e;
+  --danger: #ff5d5d;
+  --info: #5aa2ff;
 }
 
-/* GitHub Spark-inspired dark theme */
-:root {
-  /* Dark background colors */
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-tertiary: #1c2128;
-  --bg-card: #161b22;
-  --bg-hover: #1f2937;
+[data-theme="light"] {
+  color-scheme: light;
 
-  /* Border colors */
-  --border-primary: #30363d;
-  --border-secondary: #21262d;
+  --bg: #ffffff;
+  --surface: #f7f8fa;
+  --surface-2: #eef1f5;
+  --elevated: #ffffff;
 
-  /* Text colors */
-  --text-primary: #f0f6fc;
-  --text-secondary: #c9d1d9;
-  --text-tertiary: #8b949e;
+  --border: #e6e9ef;
+  --border-strong: #d3d8e2;
 
-  /* Accent colors */
-  --accent-blue: #58a6ff;
-  --accent-purple: #bc8cff;
-  --accent-green: #3fb950;
-  --accent-red: #f85149;
-  --accent-yellow: #d29922;
+  --fg: #0c0f16;
+  --muted: #515a6b;
+  --subtle: #7b8494;
 
-  /* Gradient colors */
-  --gradient-start: #6e40c9;
-  --gradient-end: #3b82f6;
+  --accent: #5a4be0;
+  --accent-strong: #4a3bd0;
+  --accent-contrast: #ffffff;
+
+  --success: #16a366;
+  --warning: #b7791f;
+  --danger: #dc4b4b;
+  --info: #2f7ff0;
+}
+
+/* Static tokens (do not flip per theme) — emitted as :root vars so they can be
+   referenced directly (e.g. body font-family) and via utilities. */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif,
+    sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular",
+    monospace;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}
+
+/* Themeable color utilities. `inline` inlines var(--…) into each utility so the
+   value resolves in whatever theme scope the element sits in. Soft tints use
+   color-mix on the (flipping) base color, so they flip for free. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-elevated: var(--elevated);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+
+  --color-success: var(--success);
+  --color-success-soft: color-mix(in srgb, var(--success) 15%, transparent);
+  --color-warning: var(--warning);
+  --color-warning-soft: color-mix(in srgb, var(--warning) 15%, transparent);
+  --color-danger: var(--danger);
+  --color-danger-soft: color-mix(in srgb, var(--danger) 15%, transparent);
+  --color-info: var(--info);
+  --color-info-soft: color-mix(in srgb, var(--info) 15%, transparent);
+  --color-muted-soft: color-mix(in srgb, var(--muted) 14%, transparent);
 }
 
 body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Subtle gradient background */
+/* Soft accent glow for primary actions and focal cards. Registered as a utility
+   so variants (hover:shadow-glow) work. */
+@utility shadow-glow {
+  box-shadow: 0 10px 40px -10px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* Ambient accent wash behind the app shell. */
 .gradient-bg {
-  background: linear-gradient(
-    135deg,
-    rgba(110, 64, 201, 0.1) 0%,
-    rgba(59, 130, 246, 0.1) 100%
+  background: radial-gradient(
+    60% 45% at 50% -5%,
+    color-mix(in srgb, var(--accent) 14%, transparent) 0%,
+    transparent 70%
   );
 }
 
-/* Card styling */
+/* --------------------------------------------------------------------------
+   Legacy compatibility — existing pages still use these class names. Re-pointed
+   to tokens so the app stays coherent until each page is reskinned in Track C.
+   -------------------------------------------------------------------------- */
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .card:hover {
-  border-color: var(--border-secondary);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: var(--border-strong);
+  box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.5);
 }
 
-/* Button styling */
 .btn-primary {
-  background: linear-gradient(
-    135deg,
-    var(--accent-blue) 0%,
-    var(--accent-purple) 100%
-  );
-  color: white;
+  background: var(--accent);
+  color: var(--accent-contrast);
   border: none;
   transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
+  background: var(--accent-strong);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.4);
 }
 
-/* Status badges */
 .badge-success {
-  background: rgba(63, 185, 80, 0.15);
-  color: var(--accent-green);
-  border: 1px solid rgba(63, 185, 80, 0.3);
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
 }
 
 .badge-error {
-  background: rgba(248, 81, 73, 0.15);
-  color: var(--accent-red);
-  border: 1px solid rgba(248, 81, 73, 0.3);
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
 }
 
 .badge-warning {
-  background: rgba(210, 153, 34, 0.15);
-  color: var(--accent-yellow);
-  border: 1px solid rgba(210, 153, 34, 0.3);
+  background: color-mix(in srgb, var(--warning) 15%, transparent);
+  color: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
 }
 
 /* Page transition animations */
@@ -118,7 +202,6 @@ body {
   }
 }
 
-/* View Transitions API support for modern browsers */
 ::view-transition-old(root) {
   animation: fade-out 350ms ease-in-out;
 }
@@ -127,7 +210,6 @@ body {
   animation: fade-in 350ms ease-in-out;
 }
 
-/* Page transition classes for fallback */
 .page-transition-enter {
   animation: fade-in 350ms ease-in-out;
 }
@@ -156,7 +238,8 @@ body {
     animation-duration: 0.01ms !important;
   }
 
-  .loading-spinner {
-    animation: none;
+  .loading-spinner,
+  .animate-ping {
+    animation: none !important;
   }
 }

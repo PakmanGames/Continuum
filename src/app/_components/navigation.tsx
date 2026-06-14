@@ -3,6 +3,8 @@
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { cn } from "~/lib/cn";
+import { Pulse } from "./ui/pulse";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -13,88 +15,59 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname();
+  const isActive = (href: string) =>
+    pathname === href || pathname?.startsWith(href + "/");
 
   return (
-    <nav className="border-b border-[#30363d] bg-[#161b22] backdrop-blur-sm">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
-            <Link
-              href="/dashboard"
-              className="bg-gradient-to-r from-[#58a6ff] to-[#bc8cff] bg-clip-text text-xl font-bold text-transparent"
-            >
-              Continiuum
-            </Link>
-            <div className="ml-10 flex space-x-1">
-              {navItems.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  pathname?.startsWith(item.href + "/");
-                
-                return (
-                  <SignedIn key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                        isActive
-                          ? "border border-[#30363d] bg-[#1f2937] text-[#58a6ff]"
-                          : "text-[#c9d1d9] hover:bg-[#1f2937] hover:text-[#f0f6fc]"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  </SignedIn>
-                );
-              })}
-              {navItems.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  pathname?.startsWith(item.href + "/");
-                
-                return (
-                  <SignedOut key={item.href}>
-                    <SignInButton mode="modal">
-                      <button
-                        className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                          isActive
-                            ? "border border-[#30363d] bg-[#1f2937] text-[#58a6ff]"
-                            : "text-[#c9d1d9] hover:bg-[#1f2937] hover:text-[#f0f6fc]"
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    </SignInButton>
-                  </SignedOut>
-                );
-              })}
-            </div>
+    <nav className="border-border bg-bg/80 sticky top-0 z-40 border-b backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-8">
+          <Link
+            href="/"
+            className="font-display text-fg flex items-center gap-2 text-lg font-semibold"
+          >
+            <Pulse tone="accent" />
+            Continiuum
+          </Link>
+          <div className="hidden items-center gap-1 md:flex">
+            {navItems.map((item) => (
+              <SignedIn key={item.href}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    isActive(item.href)
+                      ? "bg-surface-2 text-fg"
+                      : "text-muted hover:bg-surface hover:text-fg",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              </SignedIn>
+            ))}
           </div>
-          <div className="flex items-center space-x-4">
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button className="rounded-md border border-[#30363d] bg-transparent px-4 py-2 text-sm font-medium text-[#c9d1d9] transition-all hover:border-[#58a6ff] hover:bg-[#1f2937] hover:text-[#f0f6fc]">
-                  Sign In
-                </button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton
-                appearance={{
-                  elements: {
-                    avatarBox: "w-10 h-10 rounded-full border border-[#30363d]",
-                    userButtonPopoverCard:
-                      "bg-[#161b22] border border-[#30363d]",
-                    userButtonPopoverActionButton:
-                      "text-[#c9d1d9] hover:bg-[#1f2937] hover:text-[#f0f6fc]",
-                    userButtonPopoverActionButtonText: "text-[#c9d1d9]",
-                    userButtonPopoverActionButtonIcon: "text-[#c9d1d9]",
-                    userButtonPopoverFooter:
-                      "bg-[#161b22] border-t border-[#30363d]",
-                  },
-                }}
-              />
-            </SignedIn>
-          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-muted hidden items-center gap-2 text-xs sm:flex">
+            <Pulse tone="success" />
+            All systems operational
+          </span>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="border-border bg-surface text-fg hover:border-border-strong hover:bg-surface-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors">
+                Sign in
+              </button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "w-9 h-9 rounded-full border border-border",
+                },
+              }}
+            />
+          </SignedIn>
         </div>
       </div>
     </nav>
