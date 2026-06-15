@@ -9,7 +9,8 @@
    Accent: electric indigo/violet. Signature motif: the heartbeat/pulse.
    ========================================================================== */
 
-:root {
+:root,
+[data-theme="dark"] {
   color-scheme: dark;
 
   /* Surfaces */

@@ -18,6 +18,9 @@ export function Navigation() {
   const isActive = (href: string) =>
     pathname === href || pathname?.startsWith(href + "/");
 
+  // The marketing landing ("/") ships its own light header; hide the app nav there.
+  if (pathname === "/") return null;
+
   return (
     <nav className="border-border bg-bg/80 sticky top-0 z-40 border-b backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">

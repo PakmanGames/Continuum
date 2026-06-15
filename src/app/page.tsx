@@ -1,49 +1,543 @@
-"use client";
+import { auth } from "@clerk/nextjs/server";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import {
+  ArrowRight,
+  Boxes,
+  Brain,
+  Github,
+  LayoutDashboard,
+  Network,
+  Phone,
+  Search,
+  Server,
+  Wand2,
+} from "lucide-react";
+import { Pulse } from "./_components/ui/pulse";
 
-import { useAuth } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { PageTransition } from "./_components/page-transition";
+// TODO(Track E): point this at the real public repo before shipping the landing.
+const GITHUB_URL = "#";
 
-export default function HomePage() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const router = useRouter();
-  const [isRedirecting, setIsRedirecting] = useState(false);
+const ctaPrimary =
+  "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-medium text-accent-contrast transition-all hover:bg-accent-strong hover:shadow-glow";
+const ctaSecondary =
+  "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-5 text-sm font-medium text-fg transition-colors hover:border-border-strong hover:bg-surface-2";
 
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      setIsRedirecting(true);
-      router.push("/dashboard");
-    }
-  }, [isLoaded, isSignedIn, router]);
+/**
+ * Marketing landing (light theme). Authenticated users skip straight to the
+ * dashboard; everyone else gets the pitch. The app nav is hidden on "/" (see
+ * navigation.tsx) so this page owns its own header.
+ */
+export default async function HomePage() {
+  const { userId } = await auth();
+  if (userId) redirect("/dashboard");
 
-  // Show loading state while checking auth or redirecting
-  if (!isLoaded || isRedirecting) {
-    return (
-      <main className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[hsl(280,100%,70%)] border-t-transparent"></div>
-          <p className="text-lg text-white/70">
-            {isRedirecting ? "Redirecting to dashboard..." : "Loading..."}
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  // Show landing page for unauthenticated users
   return (
-    <PageTransition>
-      <main className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-            Continiuum
+    <div data-theme="light" className="bg-bg text-fg min-h-screen">
+      <SiteHeader />
+
+      {/* Hero */}
+      <section className="mx-auto grid max-w-6xl gap-12 px-6 pt-16 pb-20 lg:grid-cols-2 lg:items-center lg:pt-24">
+        <div>
+          <p className="border-border bg-surface text-accent inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-xs tracking-widest uppercase">
+            <Pulse tone="accent" />
+            Autonomous AI SRE
+          </p>
+          <h1 className="font-display mt-6 text-5xl leading-[1.05] font-semibold tracking-tight sm:text-6xl">
+            Your services break.
+            <br />
+            <span className="text-accent">Continiuum heals them.</span>
           </h1>
-          <p className="text-xl text-white/70">
-            Incident Management Dashboard
+          <p className="text-muted mt-6 max-w-xl text-lg">
+            A mesh of AI agents watches your containerized services, diagnoses
+            failures with an LLM, and fixes them automatically — escalating to a
+            human by voice only when they can&apos;t.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link href="/dashboard" className={ctaPrimary}>
+              Open the dashboard
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="#how" className={ctaSecondary}>
+              See how it works
+            </Link>
+          </div>
+          <p className="text-subtle mt-5 text-sm">
+            No dashboards to babysit. No 3 a.m. page you didn&apos;t need.
           </p>
         </div>
-      </main>
-    </PageTransition>
+
+        <HeroPreview />
+      </section>
+
+      {/* Outcomes strip */}
+      <section className="border-border bg-surface border-y">
+        <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 sm:grid-cols-3">
+          <Outcome
+            icon={Search}
+            title="Detects in seconds"
+            body="Heartbeats and logs stream in continuously — a stalled service is caught almost immediately."
+          />
+          <Outcome
+            icon={Wand2}
+            title="Heals without you"
+            body="Most incidents are diagnosed and remediated before anyone opens a dashboard."
+          />
+          <Outcome
+            icon={Phone}
+            title="Calls only when it matters"
+            body="If a fix won't hold, an AI voice call reaches your on-call with the full context."
+          />
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="mx-auto max-w-6xl px-6 py-24">
+        <SectionHeading
+          eyebrow="Capabilities"
+          title="More than monitoring. It acts."
+          subtitle="Continiuum sits on top of your container infra and does the parts a dashboard can't."
+        />
+        <div className="mt-12 grid gap-5 sm:grid-cols-2">
+          <FeatureCard
+            icon={Brain}
+            title="Agentic diagnosis"
+            body="Every failure arrives with a plain-English explanation and a suggested fix, generated by an LLM from the real logs and container state — not a raw stack trace."
+          />
+          <FeatureCard
+            icon={Wand2}
+            title="Self-healing"
+            body="Continiuum applies the fix automatically and rolls back if it doesn't take. The incident closes itself and lands in the timeline as resolved."
+          />
+          <FeatureCard
+            icon={Phone}
+            title="AI voice escalation"
+            body="When an incident needs a human, Continiuum phones your on-call and explains what's wrong in a natural voice — not one more notification to miss."
+          />
+          <FeatureCard
+            icon={Network}
+            title="Recursive agent mesh"
+            body="Agents don't just watch your services — they watch each other. If one goes down, a peer respawns it. No single point of failure."
+          />
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how" className="border-border bg-surface border-y">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <SectionHeading
+            eyebrow="The loop"
+            title="Detect, diagnose, heal, escalate"
+            subtitle="Every incident runs the same four steps — automatically, in that order."
+          />
+          <ol className="mt-12 grid gap-6 md:grid-cols-4">
+            <Step
+              n="01"
+              icon={Search}
+              title="Detect"
+              body="Agents track container state and heartbeats. A missed beat or an error log opens an incident."
+            />
+            <Step
+              n="02"
+              icon={Brain}
+              title="Diagnose"
+              body="The failing logs and env are sent to an LLM, which returns a cause and a concrete fix."
+            />
+            <Step
+              n="03"
+              icon={Wand2}
+              title="Heal"
+              body="The fix is applied and verified. If it doesn't hold, Continiuum rolls back and retries."
+            />
+            <Step
+              n="04"
+              icon={Phone}
+              title="Escalate"
+              body="Still broken? An AI voice call reaches your on-call with the diagnosis in hand."
+            />
+          </ol>
+        </div>
+      </section>
+
+      {/* Architecture */}
+      <section id="architecture" className="mx-auto max-w-6xl px-6 py-24">
+        <SectionHeading
+          eyebrow="Architecture"
+          title="A thin layer over your containers"
+          subtitle="Drop an agent alongside your services. Everything else is Continiuum."
+        />
+        <div className="mt-12 flex flex-col items-stretch gap-4 lg:flex-row lg:items-center">
+          <ArchBox
+            icon={Boxes}
+            title="Your containers"
+            body="The services you already run"
+          />
+          <ArchArrow />
+          <ArchBox
+            icon={Network}
+            title="Agent mesh"
+            body="Watch services + each other"
+            accent
+          />
+          <ArchArrow />
+          <ArchBox
+            icon={Server}
+            title="Continiuum backend"
+            body="Ingest + LLM diagnosis"
+          />
+          <ArchArrow />
+          <ArchBox
+            icon={LayoutDashboard}
+            title="Dashboard + voice"
+            body="See it, or get the call"
+          />
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="mx-auto max-w-6xl px-6 pb-24">
+        <div className="border-border bg-surface-2 relative overflow-hidden rounded-2xl border px-8 py-16 text-center">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(60%_100%_at_50%_0%,color-mix(in_srgb,var(--accent)_18%,transparent),transparent)]"
+          />
+          <h2 className="font-display relative text-3xl font-semibold sm:text-4xl">
+            Stop babysitting your services.
+          </h2>
+          <p className="text-muted relative mx-auto mt-4 max-w-xl">
+            Continiuum watches, diagnoses, and heals — so the pager stays quiet
+            and you ship instead of firefight.
+          </p>
+          <div className="relative mt-8 flex justify-center">
+            <Link href="/dashboard" className={ctaPrimary}>
+              Open the dashboard
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </div>
+  );
+}
+
+function SiteHeader() {
+  return (
+    <header className="border-border bg-bg/80 sticky top-0 z-40 border-b backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+        <Link
+          href="/"
+          className="font-display flex items-center gap-2 text-lg font-semibold"
+        >
+          <Pulse tone="accent" />
+          Continiuum
+        </Link>
+        <nav className="text-muted hidden items-center gap-8 text-sm md:flex">
+          <a href="#features" className="hover:text-fg transition-colors">
+            Features
+          </a>
+          <a href="#how" className="hover:text-fg transition-colors">
+            How it works
+          </a>
+          <a href="#architecture" className="hover:text-fg transition-colors">
+            Architecture
+          </a>
+        </nav>
+        <div className="flex items-center gap-3">
+          <a
+            href={GITHUB_URL}
+            className="text-muted hover:text-fg hidden items-center gap-2 text-sm transition-colors sm:flex"
+          >
+            <Github className="h-4 w-4" />
+            GitHub
+          </a>
+          <Link
+            href="/dashboard"
+            className="bg-accent text-accent-contrast hover:bg-accent-strong hover:shadow-glow inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-all"
+          >
+            Open dashboard
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function HeroPreview() {
+  // Star-mesh: an accent hub watching four service nodes. One node is mid-heal
+  // (warning) — the rest are healthy. Lines are SVG; the live dots are Pulses.
+  const nodes = [
+    { x: 16, y: 24, tone: "success" as const },
+    { x: 84, y: 20, tone: "success" as const },
+    { x: 20, y: 82, tone: "warning" as const },
+    { x: 82, y: 80, tone: "success" as const },
+  ];
+  const hub = { x: 50, y: 52 };
+
+  return (
+    <div
+      data-theme="dark"
+      className="border-border bg-surface rounded-xl border shadow-2xl shadow-black/40"
+    >
+      <div className="border-border flex items-center gap-2 border-b px-4 py-3">
+        <span className="bg-danger/70 h-3 w-3 rounded-full" />
+        <span className="bg-warning/70 h-3 w-3 rounded-full" />
+        <span className="bg-success/70 h-3 w-3 rounded-full" />
+        <span className="text-subtle ml-3 font-mono text-xs">
+          continuum.apak.ca/dashboard
+        </span>
+      </div>
+      <div className="p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-muted flex items-center gap-2 font-mono text-xs">
+            <Pulse tone="accent" />
+            agent-mesh · 12 agents
+          </span>
+          <span className="bg-success-soft text-success inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
+            <Pulse tone="success" />
+            Operational
+          </span>
+        </div>
+
+        <div className="relative mt-4 h-40">
+          <svg
+            className="text-border-strong absolute inset-0 h-full w-full"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            {nodes.map((n, i) => (
+              <line
+                key={i}
+                x1={hub.x}
+                y1={hub.y}
+                x2={n.x}
+                y2={n.y}
+                stroke="currentColor"
+                strokeWidth={0.4}
+                strokeOpacity={0.7}
+              />
+            ))}
+          </svg>
+          <MeshDot x={hub.x} y={hub.y} tone="accent" />
+          {nodes.map((n, i) => (
+            <MeshDot key={i} x={n.x} y={n.y} tone={n.tone} />
+          ))}
+        </div>
+
+        <div className="border-border bg-bg mt-4 flex items-center justify-between rounded-lg border px-3 py-2">
+          <span className="text-muted flex items-center gap-2 font-mono text-xs">
+            <span className="bg-info-soft text-info inline-flex items-center gap-1.5 rounded-full px-2 py-0.5">
+              Resolved
+            </span>
+            payments · auto-healed 2s ago
+          </span>
+          <span className="text-success font-mono text-xs">✓ fix applied</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MeshDot({
+  x,
+  y,
+  tone,
+}: {
+  x: number;
+  y: number;
+  tone: "success" | "warning" | "accent";
+}) {
+  return (
+    <span
+      className="absolute"
+      style={{
+        left: `${x}%`,
+        top: `${y}%`,
+        transform: "translate(-50%, -50%)",
+      }}
+    >
+      <Pulse tone={tone} />
+    </span>
+  );
+}
+
+function Outcome({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Search;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="flex gap-3">
+      <Icon className="text-accent mt-0.5 h-5 w-5 shrink-0" />
+      <div>
+        <p className="text-fg font-medium">{title}</p>
+        <p className="text-muted mt-1 text-sm">{body}</p>
+      </div>
+    </div>
+  );
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  subtitle,
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="max-w-2xl">
+      <p className="text-accent font-mono text-xs tracking-widest uppercase">
+        {eyebrow}
+      </p>
+      <h2 className="font-display mt-3 text-3xl font-semibold sm:text-4xl">
+        {title}
+      </h2>
+      <p className="text-muted mt-3">{subtitle}</p>
+    </div>
+  );
+}
+
+function FeatureCard({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Brain;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="border-border bg-surface hover:border-border-strong rounded-xl border p-6 transition-colors">
+      <div className="bg-accent-soft text-accent flex h-10 w-10 items-center justify-center rounded-lg">
+        <Icon className="h-5 w-5" />
+      </div>
+      <h3 className="font-display mt-4 text-lg font-semibold">{title}</h3>
+      <p className="text-muted mt-2 text-sm">{body}</p>
+    </div>
+  );
+}
+
+function Step({
+  n,
+  icon: Icon,
+  title,
+  body,
+}: {
+  n: string;
+  icon: typeof Search;
+  title: string;
+  body: string;
+}) {
+  return (
+    <li className="border-border bg-bg rounded-xl border p-6">
+      <div className="flex items-center justify-between">
+        <span className="text-subtle font-mono text-sm">{n}</span>
+        <Icon className="text-accent h-5 w-5" />
+      </div>
+      <h3 className="font-display mt-4 text-lg font-semibold">{title}</h3>
+      <p className="text-muted mt-2 text-sm">{body}</p>
+    </li>
+  );
+}
+
+function ArchBox({
+  icon: Icon,
+  title,
+  body,
+  accent,
+}: {
+  icon: typeof Boxes;
+  title: string;
+  body: string;
+  accent?: boolean;
+}) {
+  return (
+    <div
+      className={`flex-1 rounded-xl border p-5 text-center ${
+        accent ? "border-accent/40 bg-accent-soft" : "border-border bg-surface"
+      }`}
+    >
+      <Icon
+        className={`mx-auto h-6 w-6 ${accent ? "text-accent" : "text-muted"}`}
+      />
+      <p className="text-fg mt-3 font-medium">{title}</p>
+      <p className="text-muted mt-1 text-xs">{body}</p>
+    </div>
+  );
+}
+
+function ArchArrow() {
+  return (
+    <ArrowRight className="text-subtle mx-auto h-5 w-5 shrink-0 rotate-90 lg:rotate-0" />
+  );
+}
+
+function SiteFooter() {
+  return (
+    <footer className="border-border border-t">
+      <div className="mx-auto grid max-w-6xl gap-8 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="lg:col-span-2">
+          <Link
+            href="/"
+            className="font-display flex w-fit items-center gap-2 text-lg font-semibold"
+          >
+            <Pulse tone="accent" />
+            Continiuum
+          </Link>
+          <p className="text-muted mt-3 max-w-xs text-sm">
+            Self-healing infrastructure for containerized services.
+          </p>
+        </div>
+        <FooterCol
+          title="Product"
+          links={[
+            { label: "Features", href: "#features" },
+            { label: "How it works", href: "#how" },
+            { label: "Architecture", href: "#architecture" },
+            { label: "Dashboard", href: "/dashboard" },
+          ]}
+        />
+        <FooterCol
+          title="Project"
+          links={[{ label: "GitHub", href: GITHUB_URL }]}
+        />
+      </div>
+      <div className="border-border border-t">
+        <div className="text-subtle mx-auto max-w-6xl px-6 py-6 text-sm">
+          © {new Date().getFullYear()} Continiuum
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function FooterCol({
+  title,
+  links,
+}: {
+  title: string;
+  links: { label: string; href: string }[];
+}) {
+  return (
+    <div>
+      <p className="text-fg text-sm font-medium">{title}</p>
+      <ul className="text-muted mt-3 space-y-2 text-sm">
+        {links.map((l) => (
+          <li key={l.label}>
+            <Link href={l.href} className="hover:text-fg transition-colors">
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
