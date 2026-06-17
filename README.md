@@ -14,6 +14,9 @@ pnpm install
 pnpm run dev
 ```
 
+Every command is documented in **[docs/SCRIPTS.md](./docs/SCRIPTS.md)** — what
+each one does, which ones write to the database, and how the seed scripts differ.
+
 **Additional Scripts for DB related actions:**
 
 ```bash
