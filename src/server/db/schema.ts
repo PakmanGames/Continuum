@@ -64,3 +64,20 @@ export const users = createTable("user", (d) => ({
     .notNull(),
 }));
 // User and organization tables might not be necessary lets wait for clerk auth implementation first
+
+/**
+ * Marketing waitlist. The product is pre-release, so the landing page collects
+ * interest instead of handing visitors a dashboard they cannot use yet.
+ * `email` is unique so a repeat submission is an idempotent no-op rather than a
+ * duplicate row — the signup form reports success either way.
+ */
+export const waitlist = createTable("waitlist", (d) => ({
+  id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+  email: d.varchar({ length: 256 }).notNull().unique(),
+  /** Optional free-text context, e.g. "we run 40 containers on ECS". */
+  note: d.varchar({ length: 1024 }),
+  createdAt: d
+    .timestamp({ withTimezone: true })
+    .default(sql`NOW()`)
+    .notNull(),
+}));

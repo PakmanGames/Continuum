@@ -54,8 +54,8 @@ export default async function HomePage() {
             human by voice only when they can&apos;t.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link href="/dashboard" className={ctaPrimary}>
-              Open the dashboard
+            <Link href="/waitlist" className={ctaPrimary}>
+              Join the waitlist
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link href="#how" className={ctaSecondary}>
@@ -209,8 +209,8 @@ export default async function HomePage() {
             and you ship instead of firefight.
           </p>
           <div className="relative mt-8 flex justify-center">
-            <Link href="/dashboard" className={ctaPrimary}>
-              Open the dashboard
+            <Link href="/waitlist" className={ctaPrimary}>
+              Join the waitlist
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -253,10 +253,10 @@ function SiteHeader() {
             GitHub
           </a>
           <Link
-            href="/dashboard"
+            href="/waitlist"
             className="bg-accent text-accent-contrast hover:bg-accent-strong hover:shadow-glow inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-all"
           >
-            Open dashboard
+            Join waitlist
           </Link>
         </div>
       </div>
@@ -502,7 +502,7 @@ function SiteFooter() {
             { label: "Features", href: "#features" },
             { label: "How it works", href: "#how" },
             { label: "Architecture", href: "#architecture" },
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "Waitlist", href: "/waitlist" },
           ]}
         />
         <FooterCol
