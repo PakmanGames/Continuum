@@ -3,8 +3,9 @@ import { db } from "~/server/db";
 import * as schema from "~/server/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const { id } = await params;
         // Update the error to mark it as resolved
         const updated = await db
             .update(schema.errors)
@@ -12,7 +13,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
                 resolved: true,
                 resolvedAt: sql`NOW()`
             })
-            .where(eq(schema.errors.id, parseInt(params.id)))
+            .where(eq(schema.errors.id, parseInt(id)))
             .returning();
 
         if (updated.length === 0) {

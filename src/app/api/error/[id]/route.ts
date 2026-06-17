@@ -3,9 +3,10 @@ import { db } from "~/server/db";
 import * as schema from "~/server/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const errors = await db.select().from(schema.errors).where(eq(schema.errors.id, parseInt(params.id)));
+        const { id } = await params;
+        const errors = await db.select().from(schema.errors).where(eq(schema.errors.id, parseInt(id)));
         
         if (errors.length === 0) {
             return NextResponse.json({ error: "Error not found" }, { status: 404 });
