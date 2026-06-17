@@ -1,236 +1,303 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import type { Server } from "~/lib/mock-data";
+import { useCallback, useEffect, useState } from "react";
+import { RefreshCw, Server as ServerIcon } from "lucide-react";
+
+import { cn } from "~/lib/cn";
+import {
+  Button,
+  Card,
+  StatTile,
+  StatusPill,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  type Status,
+} from "../_components/ui";
 import { PageTransition } from "../_components/page-transition";
 
+/** Shape returned by `GET /api/servers`. Timestamps arrive as ISO strings. */
+type FleetServer = {
+  id: string;
+  name: string;
+  status: "running" | "stopped" | "crashed";
+  cpu: number;
+  memory: number;
+  updatedAt: string;
+};
+
+/** Container state maps onto the shared health vocabulary of StatusPill. */
+const STATUS_PILL: Record<FleetServer["status"], Status> = {
+  running: "healthy",
+  crashed: "down",
+  stopped: "unknown",
+};
+
+const STATUS_LABEL: Record<FleetServer["status"], string> = {
+  running: "Running",
+  crashed: "Crashed",
+  stopped: "Stopped",
+};
+
+function relativeTime(iso: string): string {
+  const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+  if (!Number.isFinite(seconds)) return "—";
+  if (seconds < 60) return "just now";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}
+
+/**
+ * Horizontal usage meter. Colour crosses into warning at 60% and danger at 80%,
+ * matching the thresholds an operator would set an alert on.
+ */
+function UsageMeter({ value }: { value: number }) {
+  const pct = Math.min(Math.max(value, 0), 100);
+  return (
+    <div className="flex items-center gap-3">
+      <div className="bg-surface-2 h-1.5 w-20 overflow-hidden rounded-full">
+        <div
+          className={cn(
+            "h-full rounded-full transition-[width] duration-500",
+            pct > 80 ? "bg-danger" : pct > 60 ? "bg-warning" : "bg-success",
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-muted w-12 font-mono text-xs tabular-nums">
+        {pct.toFixed(1)}%
+      </span>
+    </div>
+  );
+}
+
 export default function ServersPage() {
-  const [servers, setServers] = useState<Server[]>([]);
+  const [servers, setServers] = useState<FleetServer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  const fetchServers = async () => {
+  const fetchServers = useCallback(async () => {
     try {
-      setIsLoading(true);
       setError(null);
-
       const response = await fetch("/api/servers");
       if (!response.ok) throw new Error("Failed to fetch servers");
-
-      const serversData = await response.json();
-      setServers(serversData);
+      setServers((await response.json()) as FleetServer[]);
     } catch (err) {
       console.error("Error fetching servers:", err);
       setError(err instanceof Error ? err.message : "Failed to load servers");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchServers();
   }, []);
 
+  useEffect(() => {
+    void fetchServers();
+  }, [fetchServers]);
+
   const handleRefresh = async () => {
+    setBusyId("__refresh");
     try {
       const response = await fetch("/api/servers/refresh", { method: "POST" });
       if (!response.ok) throw new Error("Failed to refresh servers");
-
-      await fetchServers(); // Refresh the list
-      alert("Servers refreshed successfully");
+      await fetchServers();
+      setNotice("Fleet refreshed");
     } catch (err) {
       console.error("Error refreshing servers:", err);
-      alert("Failed to refresh servers");
+      setNotice("Could not refresh the fleet");
+    } finally {
+      setBusyId(null);
     }
   };
 
-  const handleReset = async (serverId: string, serverName: string) => {
+  const handleReset = async (server: FleetServer) => {
+    setBusyId(server.id);
     try {
-      const response = await fetch(`/api/servers/${serverId}/reset`, {
+      const response = await fetch(`/api/servers/${server.id}/reset`, {
         method: "POST",
       });
       if (!response.ok) throw new Error("Failed to reset server");
-
-      await fetchServers(); // Refresh the list
-      alert(`Server ${serverName} reset successfully`);
+      await fetchServers();
+      setNotice(`${server.name} reset`);
     } catch (err) {
       console.error("Error resetting server:", err);
-      alert(`Failed to reset ${serverName}`);
+      setNotice(`Could not reset ${server.name}`);
+    } finally {
+      setBusyId(null);
     }
   };
 
-  if (isLoading) {
-    return (
-      <PageTransition>
-        <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-12">
-            <p className="text-[#8b949e]">Loading servers...</p>
-          </div>
-        </div>
-      </PageTransition>
-    );
-  }
-
-  if (error) {
-    return (
-      <PageTransition>
-        <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-12">
-            <p className="text-[#f85149]">Error: {error}</p>
-          </div>
-        </div>
-      </PageTransition>
-    );
-  }
+  const running = servers.filter((s) => s.status === "running");
+  const unhealthy = servers.filter((s) => s.status !== "running");
+  const averageCpu = running.length
+    ? running.reduce((sum, s) => sum + s.cpu, 0) / running.length
+    : 0;
 
   return (
     <PageTransition>
-      <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between pt-6">
-          <h1 className="text-3xl font-bold text-[#f0f6fc]">Servers</h1>
-          <button
-            onClick={handleRefresh}
-            className="rounded-lg bg-gradient-to-r from-[#58a6ff] to-[#bc8cff] px-4 py-2 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
-          >
-            Refresh
-          </button>
-        </div>
-
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-[#30363d]">
-              <thead className="bg-[#161b22]">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-[#8b949e] uppercase">
-                    Container Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-[#8b949e] uppercase">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-[#8b949e] uppercase">
-                    CPU Usage
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-[#8b949e] uppercase">
-                    Memory Usage
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-[#8b949e] uppercase">
-                    Last Crash
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-[#8b949e] uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#30363d] bg-[#161b22]">
-                {servers.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-8 text-center text-[#8b949e]"
-                    >
-                      No servers found
-                    </td>
-                  </tr>
-                ) : (
-                  servers.map((server) => (
-                    <tr
-                      key={server.id}
-                      className="transition-colors hover:bg-[#1f2937]"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-[#f0f6fc]">
-                          {server.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            server.status === "running"
-                              ? "badge-success"
-                              : server.status === "crashed"
-                                ? "badge-error"
-                                : "border border-[#30363d] bg-[#30363d] text-[#c9d1d9]"
-                          }`}
-                        >
-                          {server.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-16">
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-[#30363d]">
-                              <div
-                                className={`h-full transition-all ${
-                                  server.cpu > 80
-                                    ? "bg-gradient-to-r from-[#f85149] to-[#da3633]"
-                                    : server.cpu > 60
-                                      ? "bg-gradient-to-r from-[#d29922] to-[#bb8009]"
-                                      : "bg-gradient-to-r from-[#3fb950] to-[#2ea043]"
-                                }`}
-                                style={{
-                                  width: `${Math.min(server.cpu, 100)}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <span className="ml-2 text-sm text-[#f0f6fc]">
-                            {server.cpu.toFixed(1)}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-16">
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-[#30363d]">
-                              <div
-                                className={`h-full transition-all ${
-                                  server.memory > 80
-                                    ? "bg-gradient-to-r from-[#f85149] to-[#da3633]"
-                                    : server.memory > 60
-                                      ? "bg-gradient-to-r from-[#d29922] to-[#bb8009]"
-                                      : "bg-gradient-to-r from-[#3fb950] to-[#2ea043]"
-                                }`}
-                                style={{
-                                  width: `${Math.min(server.memory, 100)}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <span className="ml-2 text-sm text-[#f0f6fc]">
-                            {server.memory.toFixed(1)}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-[#8b949e]">
-                        {server.lastCrashTime
-                          ? server.lastCrashTime.toLocaleString()
-                          : "Never"}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleReset(server.id, server.name)}
-                            className="text-[#58a6ff] transition-colors hover:text-[#79c0ff]"
-                          >
-                            Reset
-                          </button>
-                          <span className="text-[#30363d]">|</span>
-                          <Link
-                            href={`/servers/${server.id}/logs`}
-                            className="text-[#58a6ff] transition-colors hover:text-[#79c0ff]"
-                          >
-                            View Logs
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+      <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-fg text-3xl font-semibold">
+              Fleet
+            </h1>
+            <p className="text-muted mt-1 text-sm">
+              Every container reporting to Continiuum, and what its agent last
+              saw.
+            </p>
           </div>
-        </div>
+          <div className="flex items-center gap-3">
+            {notice && (
+              <span className="text-subtle text-xs" role="status">
+                {notice}
+              </span>
+            )}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={busyId !== null}
+            >
+              <RefreshCw
+                className={cn(
+                  "mr-2 h-3.5 w-3.5",
+                  busyId === "__refresh" && "animate-spin",
+                )}
+                aria-hidden="true"
+              />
+              Refresh
+            </Button>
+          </div>
+        </header>
+
+        {!isLoading && !error && servers.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatTile
+              label="Containers"
+              value={servers.length}
+              icon={ServerIcon}
+            />
+            <StatTile
+              label="Running"
+              value={running.length}
+              delta={
+                unhealthy.length > 0
+                  ? `${unhealthy.length} not healthy`
+                  : "all healthy"
+              }
+              deltaDirection={unhealthy.length > 0 ? "down" : "up"}
+            />
+            <StatTile
+              label="Avg CPU"
+              value={averageCpu.toFixed(1)}
+              unit="%"
+            />
+          </div>
+        )}
+
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHead>
+              <tr>
+                <TableHeaderCell>Container</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell>CPU</TableHeaderCell>
+                <TableHeaderCell>Memory</TableHeaderCell>
+                <TableHeaderCell>Last check-in</TableHeaderCell>
+                <TableHeaderCell className="text-right">
+                  Actions
+                </TableHeaderCell>
+              </tr>
+            </TableHead>
+            <TableBody>
+              {isLoading &&
+                // Skeleton rows keep the table height stable while loading, so
+                // the page does not jump when real rows arrive.
+                Array.from({ length: 4 }, (_, i) => (
+                  <TableRow key={`skeleton-${i}`}>
+                    <TableCell colSpan={6}>
+                      <div className="bg-surface-2 h-5 w-full animate-pulse rounded" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+
+              {!isLoading && error && (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center">
+                    <p className="text-danger text-sm">{error}</p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-4"
+                      onClick={() => void fetchServers()}
+                    >
+                      Try again
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading && !error && servers.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center">
+                    <p className="text-fg text-sm font-medium">
+                      No containers yet
+                    </p>
+                    <p className="text-muted mx-auto mt-1 max-w-sm text-sm">
+                      Point an agent at this deployment with{" "}
+                      <code className="text-accent font-mono text-xs">
+                        AGENT_BACKEND_URL
+                      </code>{" "}
+                      and its containers will appear here.
+                    </p>
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!isLoading &&
+                !error &&
+                servers.map((server) => (
+                  <TableRow key={server.id}>
+                    <TableCell className="font-medium whitespace-nowrap">
+                      {server.name}
+                    </TableCell>
+                    <TableCell>
+                      <StatusPill
+                        status={STATUS_PILL[server.status]}
+                        label={STATUS_LABEL[server.status]}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <UsageMeter value={server.cpu} />
+                    </TableCell>
+                    <TableCell>
+                      <UsageMeter value={server.memory} />
+                    </TableCell>
+                    <TableCell className="text-muted whitespace-nowrap">
+                      {relativeTime(server.updatedAt)}
+                    </TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => void handleReset(server)}
+                        disabled={busyId !== null}
+                      >
+                        {busyId === server.id ? "Resetting…" : "Reset"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </Card>
       </div>
     </PageTransition>
   );
