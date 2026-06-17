@@ -31,14 +31,14 @@ export function IncidentTimeline({
 
   return (
     <div className="card p-6">
-      <h2 className="mb-4 text-lg font-semibold text-[#f0f6fc]">
+      <h2 className="mb-4 text-lg font-semibold text-[var(--fg)]">
         Incident Timeline
       </h2>
 
       {/* main timeline – height kept small like your original */}
       <div className="relative h-24">
         {/* horizontal axis */}
-        <div className="absolute left-4 right-4 top-4 h-px bg-[#30363d]" />
+        <div className="absolute left-4 right-4 top-4 h-px bg-[var(--border)]" />
 
         {/* 90 equal columns – must match the graph's day layout */}
         <div
@@ -57,18 +57,18 @@ export function IncidentTimeline({
                 className="flex flex-col items-center text-[10px]"
               >
                 {/* tiny tick on axis for every day (optional) */}
-                <div className="h-3 w-px bg-[#30363d]" />
+                <div className="h-3 w-px bg-[var(--border)]" />
 
                 {/* only show stem + dots when there are incidents */}
                 {hasIncidents && (
                   <div className="mt-1 flex flex-col items-center">
-                    <div className="relative h-16 w-px bg-[#30363d]">
+                    <div className="relative h-16 w-px bg-[var(--border)]">
                       <div className="absolute left-1/2 top-0 flex -translate-x-1/2 flex-col items-center gap-3">
                         {dayIncidents.map((incident) => (
                           <button
                             key={incident.id}
                             type="button"
-                            className="h-3 w-3 rounded-full border border-[#f85149] bg-[#da3633] shadow-sm hover:scale-110 focus:outline-none focus:ring-1 focus:ring-[#f85149]"
+                            className="h-3 w-3 rounded-full border border-[var(--danger)] bg-[var(--danger)] shadow-sm hover:scale-110 focus:outline-none focus:ring-1 focus:ring-[var(--danger)]"
                             title={`${incident.serverName} – ${incident.timestamp.toLocaleString()}`}
                             onClick={() => setSelectedIncident(incident)}
                           />
@@ -76,7 +76,7 @@ export function IncidentTimeline({
                       </div>
                     </div>
                     {/* label only under days with incidents to avoid clutter */}
-                    <span className="mt-1 text-[#8b949e]">
+                    <span className="mt-1 text-[var(--muted)]">
                       {formatDayLabel(date)}
                     </span>
                   </div>
@@ -89,43 +89,43 @@ export function IncidentTimeline({
 
       {/* details panel on dot click */}
       {selectedIncident && (
-        <div className="mt-4 rounded-lg border border-[#30363d] bg-[#0d1117] p-4">
+        <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-sm font-semibold text-[#f0f6fc]">
+              <h3 className="text-sm font-semibold text-[var(--fg)]">
                 {selectedIncident.serverName}
               </h3>
-              <p className="text-xs text-[#8b949e]">
+              <p className="text-xs text-[var(--muted)]">
                 {selectedIncident.timestamp.toLocaleString()}
               </p>
-              <p className="mt-3 text-xs font-semibold text-[#c9d1d9]">
+              <p className="mt-3 text-xs font-semibold text-[var(--fg)]">
                 Incident details
               </p>
-              <p className="mt-1 text-xs text-[#c9d1d9]">
+              <p className="mt-1 text-xs text-[var(--fg)]">
                 {selectedIncident.aiSummary || "No AI summary available."}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setSelectedIncident(null)}
-              className="text-xs text-[#8b949e] hover:text-[#f0f6fc]"
+              className="text-xs text-[var(--muted)] hover:text-[var(--fg)]"
             >
               ✕
             </button>
           </div>
 
           <div className="mt-3">
-            <p className="text-xs font-semibold text-[#c9d1d9]">
+            <p className="text-xs font-semibold text-[var(--fg)]">
               Suggested fix
             </p>
-            <p className="mt-1 text-xs text-[#c9d1d9] whitespace-pre-line">
+            <p className="mt-1 text-xs text-[var(--fg)] whitespace-pre-line">
               {selectedIncident.aiFix || "No suggested fix available."}
             </p>
           </div>
 
           <div className="mt-3">
-            <p className="text-xs font-semibold text-[#c9d1d9]">Log snippet</p>
-            <pre className="mt-1 max-h-32 overflow-auto rounded bg-[#010409] p-2 text-[10px] text-[#c9d1d9]">
+            <p className="text-xs font-semibold text-[var(--fg)]">Log snippet</p>
+            <pre className="mt-1 max-h-32 overflow-auto rounded bg-[var(--bg)] p-2 text-[10px] text-[var(--fg)]">
               {selectedIncident.logs || "No logs available."}
             </pre>
           </div>

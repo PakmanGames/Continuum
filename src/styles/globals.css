@@ -2,67 +2,69 @@
 
 /* ==========================================================================
    Continiuum design tokens
-   Dark is the default (:root) for the app dashboard. The marketing landing
-   page opts into light by setting [data-theme="light"] on a wrapper. Semantic
-   vars below flip per theme; @theme inline maps them onto Tailwind utilities
+   Light is the default (:root) — the marketing landing and the app share one
+   look. [data-theme="dark"] on a wrapper opts that subtree into dark (the
+   landing hero's embedded product preview relies on it), and the planned
+   site-wide theme toggle will flip the same attribute on <html>. Semantic vars
+   below flip per theme; @theme inline maps them onto Tailwind utilities
    (bg-surface, text-fg, text-accent, …) so those utilities flip too.
    Accent: electric indigo/violet. Signature motif: the heartbeat/pulse.
    ========================================================================== */
 
 :root,
-[data-theme="dark"] {
-  color-scheme: dark;
-
-  /* Surfaces */
-  --bg: #0a0c11;
-  --surface: #12151d;
-  --surface-2: #191d28;
-  --elevated: #1e2330;
-
-  /* Lines */
-  --border: #232a37;
-  --border-strong: #313a4b;
-
-  /* Text */
-  --fg: #e9edf6;
-  --muted: #9aa5b8;
-  --subtle: #6c7689;
-
-  /* Brand accent */
-  --accent: #7b6cff;
-  --accent-strong: #6455f5;
-  --accent-contrast: #ffffff;
-
-  /* Semantic */
-  --success: #35d07f;
-  --warning: #f2b23e;
-  --danger: #ff5d5d;
-  --info: #5aa2ff;
-}
-
 [data-theme="light"] {
   color-scheme: light;
 
+  /* Surfaces */
   --bg: #ffffff;
   --surface: #f7f8fa;
   --surface-2: #eef1f5;
   --elevated: #ffffff;
 
+  /* Lines */
   --border: #e6e9ef;
   --border-strong: #d3d8e2;
 
+  /* Text */
   --fg: #0c0f16;
   --muted: #515a6b;
   --subtle: #7b8494;
 
+  /* Brand accent */
   --accent: #5a4be0;
   --accent-strong: #4a3bd0;
   --accent-contrast: #ffffff;
 
+  /* Semantic */
   --success: #16a366;
   --warning: #b7791f;
   --danger: #dc4b4b;
   --info: #2f7ff0;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0a0c11;
+  --surface: #12151d;
+  --surface-2: #191d28;
+  --elevated: #1e2330;
+
+  --border: #232a37;
+  --border-strong: #313a4b;
+
+  --fg: #e9edf6;
+  --muted: #9aa5b8;
+  --subtle: #6c7689;
+
+  --accent: #7b6cff;
+  --accent-strong: #6455f5;
+  --accent-contrast: #ffffff;
+
+  --success: #35d07f;
+  --warning: #f2b23e;
+  --danger: #ff5d5d;
+  --info: #5aa2ff;
 }
 
 /* Static tokens (do not flip per theme) — emitted as :root vars so they can be

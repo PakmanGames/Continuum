@@ -86,9 +86,9 @@ export default function TimelinePage() {
     switch (type) {
       case "error":
         return (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#f85149]/50 bg-gradient-to-br from-[#f85149]/30 to-[#da3633]/30 shadow-lg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--danger)]/50 bg-gradient-to-br from-[var(--danger)]/30 to-[var(--danger)]/30 shadow-lg">
             <svg
-              className="h-5 w-5 text-[#f85149]"
+              className="h-5 w-5 text-[var(--danger)]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -104,9 +104,9 @@ export default function TimelinePage() {
         );
       case "deployment":
         return (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#58a6ff]/50 bg-gradient-to-br from-[#58a6ff]/30 to-[#bc8cff]/30 shadow-lg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--accent)]/50 bg-gradient-to-br from-[var(--accent)]/30 to-[var(--accent-strong)]/30 shadow-lg">
             <svg
-              className="h-5 w-5 text-[#58a6ff]"
+              className="h-5 w-5 text-[var(--accent)]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -122,9 +122,9 @@ export default function TimelinePage() {
         );
       case "incident":
         return (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#3fb950]/50 bg-gradient-to-br from-[#3fb950]/30 to-[#2ea043]/30 shadow-lg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--success)]/50 bg-gradient-to-br from-[var(--success)]/30 to-[var(--success)]/30 shadow-lg">
             <svg
-              className="h-5 w-5 text-[#3fb950]"
+              className="h-5 w-5 text-[var(--success)]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -140,9 +140,9 @@ export default function TimelinePage() {
         );
       default:
         return (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#30363d] bg-[#30363d] shadow-lg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--border)] shadow-lg">
             <svg
-              className="h-5 w-5 text-[#c9d1d9]"
+              className="h-5 w-5 text-[var(--fg)]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -164,7 +164,7 @@ export default function TimelinePage() {
       <PageTransition>
         <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
-            <p className="text-[#8b949e]">Loading timeline...</p>
+            <p className="text-[var(--muted)]">Loading timeline...</p>
           </div>
         </div>
       </PageTransition>
@@ -176,7 +176,7 @@ export default function TimelinePage() {
       <PageTransition>
         <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
-            <p className="text-[#f85149]">Error: {error}</p>
+            <p className="text-[var(--danger)]">Error: {error}</p>
           </div>
         </div>
       </PageTransition>
@@ -187,10 +187,10 @@ export default function TimelinePage() {
     <PageTransition>
       <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between pt-6">
-          <h1 className="text-3xl font-bold text-[#f0f6fc]">Timeline</h1>
+          <h1 className="text-3xl font-bold text-[var(--fg)]">Timeline</h1>
           <button
             onClick={handleRefresh}
-            className="rounded-lg bg-gradient-to-r from-[#58a6ff] to-[#bc8cff] px-4 py-2 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
+            className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-strong)] px-4 py-2 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
           >
             Refresh
           </button>
@@ -198,7 +198,7 @@ export default function TimelinePage() {
 
         {/* Time Range Controls */}
         <div className="card p-6">
-          <h2 className="mb-4 text-sm font-medium text-[#f0f6fc]">
+          <h2 className="mb-4 text-sm font-medium text-[var(--fg)]">
             Time Range
           </h2>
           <div className="flex items-center space-x-4">
@@ -208,16 +208,16 @@ export default function TimelinePage() {
               onChange={(e) =>
                 setTimeRange({ ...timeRange, start: new Date(e.target.value) })
               }
-              className="rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc] focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] focus:outline-none"
+              className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
             />
-            <span className="text-[#8b949e]">to</span>
+            <span className="text-[var(--muted)]">to</span>
             <input
               type="datetime-local"
               value={timeRange.end.toISOString().slice(0, 16)}
               onChange={(e) =>
                 setTimeRange({ ...timeRange, end: new Date(e.target.value) })
               }
-              className="rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc] focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] focus:outline-none"
+              className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
             />
             <button
               onClick={() => {
@@ -227,7 +227,7 @@ export default function TimelinePage() {
                 });
                 setSelectedDate(null);
               }}
-              className="rounded-lg border border-[#30363d] bg-[#21262d] px-4 py-2 text-sm font-medium text-[#c9d1d9] transition-colors hover:bg-[#30363d]"
+              className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--fg)] transition-colors hover:bg-[var(--border)]"
             >
               Reset
             </button>
@@ -238,13 +238,13 @@ export default function TimelinePage() {
         <div className="card p-6">
           <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-6 top-12 bottom-12 w-0.5 bg-gradient-to-b from-[#58a6ff] via-[#bc8cff] to-[#3fb950] opacity-50"></div>
+            <div className="absolute left-6 top-12 bottom-12 w-0.5 bg-gradient-to-b from-[var(--accent)] via-[var(--accent-strong)] to-[var(--success)] opacity-50"></div>
 
             {/* Timeline events */}
             <div className="space-y-8">
               {filteredEvents.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-[#8b949e]">
+                  <p className="text-[var(--muted)]">
                     No events found in the selected time range
                   </p>
                 </div>
@@ -266,14 +266,14 @@ export default function TimelinePage() {
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center space-x-2 mb-2">
-                                  <h3 className="text-sm font-semibold text-[#f0f6fc]">
+                                  <h3 className="text-sm font-semibold text-[var(--fg)]">
                                     {event.title}
                                   </h3>
-                                  <span className="text-xs text-[#8b949e]">
+                                  <span className="text-xs text-[var(--muted)]">
                                     {event.timestamp.toLocaleString()}
                                   </span>
                                 </div>
-                                <p className="text-sm text-[#c9d1d9] line-clamp-2">
+                                <p className="text-sm text-[var(--fg)] line-clamp-2">
                                   {event.description}
                                 </p>
                               </div>
@@ -282,24 +282,24 @@ export default function TimelinePage() {
 
                           {/* Hover tooltip */}
                           <div className="absolute left-full top-0 ml-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                            <div className="bg-[#161b22] border border-[#30363d] rounded-lg shadow-xl p-4 w-96 max-w-sm">
+                            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-xl p-4 w-96 max-w-sm">
                               <div className="space-y-3">
                                 <div>
-                                  <h4 className="text-sm font-semibold text-[#f0f6fc] mb-1">
+                                  <h4 className="text-sm font-semibold text-[var(--fg)] mb-1">
                                     {event.type === "error" ? "Error Message" : event.type === "deployment" ? "Deployment" : "Event"}
                                   </h4>
-                                  <p className="text-xs text-[#c9d1d9] leading-relaxed">
+                                  <p className="text-xs text-[var(--fg)] leading-relaxed">
                                     {event.description}
                                   </p>
                                 </div>
-                                <div className="pt-2 border-t border-[#30363d]">
-                                  <div className="flex items-center justify-between text-xs text-[#8b949e]">
+                                <div className="pt-2 border-t border-[var(--border)]">
+                                  <div className="flex items-center justify-between text-xs text-[var(--muted)]">
                                     <span>{event.timestamp.toLocaleString()}</span>
                                   </div>
                                 </div>
                               </div>
                               {/* Arrow pointing to the event */}
-                              <div className="absolute right-full top-4 w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-[#161b22]"></div>
+                              <div className="absolute right-full top-4 w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-[var(--surface)]"></div>
                             </div>
                           </div>
                         </div>

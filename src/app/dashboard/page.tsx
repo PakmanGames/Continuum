@@ -141,7 +141,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="mx-52 flex items-center justify-center py-12">
-        <p className="text-[#8b949e]">Loading dashboard...</p>
+        <p className="text-[var(--muted)]">Loading dashboard...</p>
       </div>
     );
   }
@@ -149,7 +149,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="mx-52 flex items-center justify-center py-12">
-        <p className="text-[#f85149]">Error: {error}</p>
+        <p className="text-[var(--danger)]">Error: {error}</p>
       </div>
     );
   }
@@ -159,15 +159,15 @@ export default function DashboardPage() {
       <div className="mx-52 space-y-6">
         <div className="flex items-center justify-between pt-6">
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold text-[#f0f6fc]">Dashboard</h1>
+            <h1 className="text-3xl font-bold text-[var(--fg)]">Dashboard</h1>
             {isConnected && (
-              <div className="flex items-center gap-2 rounded-full bg-[#1c2128] px-3 py-1.5 text-xs">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-[#3fb950]" />
-                <span className="text-[#8b949e]">Live</span>
+              <div className="flex items-center gap-2 rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-xs">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--success)]" />
+                <span className="text-[var(--muted)]">Live</span>
               </div>
             )}
             {lastUpdate && (
-              <span className="text-xs text-[#8b949e]">
+              <span className="text-xs text-[var(--muted)]">
                 Updated {lastUpdate.toLocaleTimeString()}
               </span>
             )}
@@ -181,9 +181,9 @@ export default function DashboardPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="card flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#58a6ff]/30 bg-gradient-to-br from-[#58a6ff]/20 to-[#bc8cff]/20">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--accent)]/30 bg-gradient-to-br from-[var(--accent)]/20 to-[var(--accent-strong)]/20">
               <svg
-                className="h-6 w-6 text-[#58a6ff]"
+                className="h-6 w-6 text-[var(--accent)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -197,19 +197,19 @@ export default function DashboardPage() {
               </svg>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-[#8b949e]">
+              <p className="text-sm font-medium text-[var(--muted)]">
                 Active Agents
               </p>
-              <p className="text-2xl font-semibold text-[#f0f6fc]">
+              <p className="text-2xl font-semibold text-[var(--fg)]">
                 {activeServers}
               </p>
             </div>
           </div>
 
           <div className="card flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#f85149]/30 bg-gradient-to-br from-[#f85149]/20 to-[#da3633]/20">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--danger)]/30 bg-gradient-to-br from-[var(--danger)]/20 to-[var(--danger)]/20">
               <svg
-                className="h-6 w-6 text-[#f85149]"
+                className="h-6 w-6 text-[var(--danger)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -223,19 +223,19 @@ export default function DashboardPage() {
               </svg>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-[#8b949e]">
+              <p className="text-sm font-medium text-[var(--muted)]">
                 Crashed Servers
               </p>
-              <p className="text-2xl font-semibold text-[#f0f6fc]">
+              <p className="text-2xl font-semibold text-[var(--fg)]">
                 {crashedServers}
               </p>
             </div>
           </div>
 
           <div className="card flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#d29922]/30 bg-gradient-to-br from-[#d29922]/20 to-[#bb8009]/20">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--warning)]/30 bg-gradient-to-br from-[var(--warning)]/20 to-[var(--warning)]/20">
               <svg
-                className="h-6 w-6 text-[#d29922]"
+                className="h-6 w-6 text-[var(--warning)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -249,19 +249,19 @@ export default function DashboardPage() {
               </svg>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-[#8b949e]">
+              <p className="text-sm font-medium text-[var(--muted)]">
                 Unresolved Incidents
               </p>
-              <p className="text-2xl font-semibold text-[#f0f6fc]">
+              <p className="text-2xl font-semibold text-[var(--fg)]">
                 {unresolvedIncidents}
               </p>
             </div>
           </div>
 
           <div className="card flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#30363d] bg-gradient-to-br from-[#30363d]/50 to-[#21262d]/50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--border)] bg-gradient-to-br from-[var(--border)]/50 to-[var(--surface-2)]/50">
               <svg
-                className="h-6 w-6 text-[#c9d1d9]"
+                className="h-6 w-6 text-[var(--fg)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -275,8 +275,8 @@ export default function DashboardPage() {
               </svg>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-[#8b949e]">Errors Today</p>
-              <p className="text-2xl font-semibold text-[#f0f6fc]">
+              <p className="text-sm font-medium text-[var(--muted)]">Errors Today</p>
+              <p className="text-2xl font-semibold text-[var(--fg)]">
                 {errorsToday}
               </p>
             </div>
@@ -285,14 +285,14 @@ export default function DashboardPage() {
 
         {/* Recent Incidents */}
         <div className="card">
-          <div className="border-b border-[#30363d] px-6 py-4">
-            <h2 className="text-lg font-semibold text-[#f0f6fc]">
+          <div className="border-b border-[var(--border)] px-6 py-4">
+            <h2 className="text-lg font-semibold text-[var(--fg)]">
               Recent Incidents
             </h2>
           </div>
-          <div className="divide-y divide-[#30363d]">
+          <div className="divide-y divide-[var(--border)]">
             {recentIncidents.length === 0 ? (
-              <div className="px-6 py-8 text-center text-[#8b949e]">
+              <div className="px-6 py-8 text-center text-[var(--muted)]">
                 No incidents found
               </div>
             ) : (
@@ -300,12 +300,12 @@ export default function DashboardPage() {
                 <Link
                   key={incident.id}
                   href={`/error/${incident.id}`}
-                  className="block px-6 py-4 transition-colors hover:bg-[#1f2937]"
+                  className="block px-6 py-4 transition-colors hover:bg-[var(--surface-2)]"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <p className="text-sm font-medium text-[#f0f6fc]">
+                        <p className="text-sm font-medium text-[var(--fg)]">
                           {incident.serverName}
                         </p>
                         {!incident.resolved && (
@@ -319,15 +319,15 @@ export default function DashboardPage() {
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-[#c9d1d9]">
+                      <p className="mt-1 text-sm text-[var(--fg)]">
                         {incident.aiSummary}
                       </p>
-                      <p className="mt-1 text-xs text-[#8b949e]">
+                      <p className="mt-1 text-xs text-[var(--muted)]">
                         {incident.timestamp.toLocaleString()}
                       </p>
                     </div>
                     <svg
-                      className="h-5 w-5 text-[#8b949e]"
+                      className="h-5 w-5 text-[var(--muted)]"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -348,26 +348,26 @@ export default function DashboardPage() {
 
         {/* Active Servers Preview */}
         <div className="card">
-          <div className="border-b border-[#30363d] px-6 py-4">
+          <div className="border-b border-[var(--border)] px-6 py-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[#f0f6fc]">
+              <h2 className="text-lg font-semibold text-[var(--fg)]">
                 Active Agents
               </h2>
               <Link
                 href="/servers"
-                className="text-sm font-medium text-[#58a6ff] transition-colors hover:text-[#79c0ff]"
+                className="text-sm font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)]"
               >
                 View all →
               </Link>
             </div>
           </div>
-          <div className="divide-y divide-[#30363d]">
+          <div className="divide-y divide-[var(--border)]">
             {servers.slice(0, 5).map((server) => (
               <div key={server.id} className="px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-[#f0f6fc]">
+                      <p className="text-sm font-medium text-[var(--fg)]">
                         {server.name}
                       </p>
                       <span
@@ -376,13 +376,13 @@ export default function DashboardPage() {
                             ? "badge-success"
                             : server.status === "crashed"
                               ? "badge-error"
-                              : "border border-[#30363d] bg-[#30363d] text-[#c9d1d9]"
+                              : "border border-[var(--border)] bg-[var(--border)] text-[var(--fg)]"
                         }`}
                       >
                         {server.status}
                       </span>
                     </div>
-                    <div className="mt-2 flex items-center space-x-4 text-xs text-[#8b949e]">
+                    <div className="mt-2 flex items-center space-x-4 text-xs text-[var(--muted)]">
                       <span>CPU: {server.cpu.toFixed(1)}%</span>
                       <span>Memory: {server.memory.toFixed(1)}%</span>
                     </div>
@@ -408,7 +408,7 @@ export default function DashboardPage() {
                         alert(`Failed to reset ${server.name}`);
                       }
                     }}
-                    className="rounded-lg bg-gradient-to-r from-[#58a6ff] to-[#bc8cff] px-3 py-1.5 text-xs font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
+                    className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-strong)] px-3 py-1.5 text-xs font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
                   >
                     Reset
                   </button>

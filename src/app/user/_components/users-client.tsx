@@ -51,12 +51,12 @@ export function UsersClient({
     <div className="mx-auto max-w-7xl space-y-6 px-4 pt-6 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex-1 space-y-2">
-          <h1 className="text-3xl font-bold text-[#f0f6fc]">Users</h1>
+          <h1 className="text-3xl font-bold text-[var(--fg)]">Users</h1>
           
         </div>
         <button
           onClick={() => setIsFormOpen(true)}
-          className="w-full max-w-[180px] rounded-lg bg-gradient-to-r from-[#58a6ff] to-[#bc8cff] px-4 py-2 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
+          className="w-full max-w-[180px] rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-strong)] px-4 py-2 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
         >
           Add User
         </button>
@@ -64,31 +64,31 @@ export function UsersClient({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {users.length === 0 ? (
-          <div className="col-span-full rounded-lg border border-dashed border-[#30363d] p-8 text-center text-sm text-[#8b949e]">
+          <div className="col-span-full rounded-lg border border-dashed border-[var(--border)] p-8 text-center text-sm text-[var(--muted)]">
             No users found. Add your first user using the button above.
           </div>
         ) : (
           users.map((user) => (
-            <div key={user.id} className="card border border-[#30363d] p-6">
+            <div key={user.id} className="card border border-[var(--border)] p-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-2">
-                  <p className="text-lg font-semibold text-[#f0f6fc]">
+                  <p className="text-lg font-semibold text-[var(--fg)]">
                     {user.name}
                   </p>
-                  <p className="text-sm text-[#8b949e]">{user.email}</p>
-                  <p className="text-sm text-[#8b949e]">{user.phoneNumber}</p>
+                  <p className="text-sm text-[var(--muted)]">{user.email}</p>
+                  <p className="text-sm text-[var(--muted)]">{user.phoneNumber}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleDelete(user.id)}
                   disabled={deletingId === user.id}
-                  className="rounded-full border border-[#30363d] px-2 py-1 text-xs text-[#c9d1d9] transition-colors hover:bg-[#30363d] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full border border-[var(--border)] px-2 py-1 text-xs text-[var(--fg)] transition-colors hover:bg-[var(--border)] disabled:cursor-not-allowed disabled:opacity-60"
                   aria-label={`Delete ${user.name}`}
                 >
                   {deletingId === user.id ? "…" : "✕"}
                 </button>
               </div>
-              <p className="mt-4 text-xs text-[#6e7681]">
+              <p className="mt-4 text-xs text-[var(--subtle)]">
                 Joined{" "}
                 {user.createdAt
                   ? new Date(user.createdAt).toLocaleString()
@@ -101,19 +101,19 @@ export function UsersClient({
 
       {isFormOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="card w-full max-w-md space-y-4 border border-[#30363d] p-6">
+          <div className="card w-full max-w-md space-y-4 border border-[var(--border)] p-6">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-[#f0f6fc]">
+                <h2 className="text-lg font-semibold text-[var(--fg)]">
                   Create User
                 </h2>
-                <p className="text-xs text-[#8b949e]">
+                <p className="text-xs text-[var(--muted)]">
                   Fill in the fields below to add a new user.
                 </p>
               </div>
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="text-[#8b949e] transition-colors hover:text-[#f0f6fc]"
+                className="text-[var(--muted)] transition-colors hover:text-[var(--fg)]"
                 aria-label="Close add user form"
               >
                 ✕
@@ -123,7 +123,7 @@ export function UsersClient({
               <div className="space-y-2">
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-[#c9d1d9]"
+                  className="block text-sm font-medium text-[var(--fg)]"
                 >
                   Name
                 </label>
@@ -133,14 +133,14 @@ export function UsersClient({
                   type="text"
                   required
                   autoComplete="name"
-                  className="w-full rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc] focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
                   placeholder="Jane Doe"
                 />
               </div>
               <div className="space-y-2">
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-[#c9d1d9]"
+                  className="block text-sm font-medium text-[var(--fg)]"
                 >
                   Email
                 </label>
@@ -150,14 +150,14 @@ export function UsersClient({
                   type="email"
                   required
                   autoComplete="email"
-                  className="w-full rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc] focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
                   placeholder="user@example.com"
                 />
               </div>
               <div className="space-y-2">
                 <label
                   htmlFor="phoneNumber"
-                  className="block text-sm font-medium text-[#c9d1d9]"
+                  className="block text-sm font-medium text-[var(--fg)]"
                 >
                   Phone Number
                 </label>
@@ -167,7 +167,7 @@ export function UsersClient({
                   type="tel"
                   required
                   autoComplete="tel"
-                  className="w-full rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc] focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] focus:outline-none"
+                  className="w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
                   placeholder="+1 555 123 4567"
                 />
               </div>
@@ -175,13 +175,13 @@ export function UsersClient({
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="rounded-lg border border-[#30363d] bg-[#21262d] px-4 py-2 text-sm font-medium text-[#c9d1d9] transition-colors hover:bg-[#30363d]"
+                  className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--fg)] transition-colors hover:bg-[var(--border)]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-gradient-to-r from-[#58a6ff] to-[#bc8cff] px-4 py-2 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
+                  className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-strong)] px-4 py-2 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
                 >
                   {isSaving ? "Saving..." : "Save User"}
                 </button>

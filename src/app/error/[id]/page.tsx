@@ -58,12 +58,12 @@ export default function IncidentDetailPage({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0d1117]">
+      <div className="min-h-screen bg-[var(--bg)]">
         <div className="fixed inset-0 -z-10 gradient-bg opacity-50" />
         <PageTransition>
           <div className="w-full px-4 pt-6 pb-8 sm:px-6 lg:px-8">
             <div className="flex items-center justify-center py-12">
-              <p className="text-[#8b949e]">Loading incident...</p>
+              <p className="text-[var(--muted)]">Loading incident...</p>
             </div>
           </div>
         </PageTransition>
@@ -73,12 +73,12 @@ export default function IncidentDetailPage({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0d1117]">
+      <div className="min-h-screen bg-[var(--bg)]">
         <div className="fixed inset-0 -z-10 gradient-bg opacity-50" />
         <PageTransition>
           <div className="w-full px-4 pt-6 pb-8 sm:px-6 lg:px-8">
             <div className="flex items-center justify-center py-12">
-              <p className="text-[#f85149]">Error: {error}</p>
+              <p className="text-[var(--danger)]">Error: {error}</p>
             </div>
           </div>
         </PageTransition>
@@ -91,17 +91,17 @@ export default function IncidentDetailPage({
   }
   
   return (
-    <div className="min-h-screen w-full bg-[#0d1117]">
+    <div className="min-h-screen w-full bg-[var(--bg)]">
       <div className="fixed inset-0 -z-10 gradient-bg opacity-50" />
       <PageTransition>
         <div className="w-full px-4 py-8 sm:px-6 lg:px-8">
           <div className="w-full space-y-6">
             <div className="flex items-center justify-between pt-6">
             <div>
-              <h1 className="text-3xl font-bold text-[#f0f6fc]">
+              <h1 className="text-3xl font-bold text-[var(--fg)]">
                 Incident Details
               </h1>
-              <p className="mt-1 text-sm text-[#8b949e]">
+              <p className="mt-1 text-sm text-[var(--muted)]">
                 {incident.serverName} • {incident.timestamp.toLocaleString()}
               </p>
             </div>
@@ -126,21 +126,21 @@ export default function IncidentDetailPage({
 
           {/* AI Summary */}
           <div className="card p-6">
-            <h2 className="mb-4 text-lg font-semibold text-[#f0f6fc]">
+            <h2 className="mb-4 text-lg font-semibold text-[var(--fg)]">
               AI Summary
             </h2>
-            <p className="text-sm leading-relaxed text-[#c9d1d9]">
+            <p className="text-sm leading-relaxed text-[var(--fg)]">
               {incident.aiSummary}
             </p>
           </div>
 
           {/* Suggested Fix */}
-          <div className="rounded-lg border border-[#58a6ff]/30 bg-gradient-to-br from-[#58a6ff]/10 to-[#bc8cff]/10 p-6 backdrop-blur-sm">
-            <h2 className="mb-4 text-lg font-semibold text-[#58a6ff]">
+          <div className="rounded-lg border border-[var(--accent)]/30 bg-gradient-to-br from-[var(--accent)]/10 to-[var(--accent-strong)]/10 p-6 backdrop-blur-sm">
+            <h2 className="mb-4 text-lg font-semibold text-[var(--accent)]">
               Suggested Fix
             </h2>
-            <div className="rounded-md border border-[#30363d] bg-[#0d1117] p-4">
-              <pre className="font-mono text-sm whitespace-pre-wrap text-[#c9d1d9]">
+            <div className="rounded-md border border-[var(--border)] bg-[var(--bg)] p-4">
+              <pre className="font-mono text-sm whitespace-pre-wrap text-[var(--fg)]">
                 {incident.aiFix}
               </pre>
             </div>
@@ -148,12 +148,12 @@ export default function IncidentDetailPage({
 
           {/* Raw Logs */}
           <div className="card">
-            <div className="border-b border-[#30363d] px-6 py-4">
-              <h2 className="text-lg font-semibold text-[#f0f6fc]">Raw Logs</h2>
+            <div className="border-b border-[var(--border)] px-6 py-4">
+              <h2 className="text-lg font-semibold text-[var(--fg)]">Raw Logs</h2>
             </div>
             <div className="px-6 py-4">
-              <div className="overflow-x-auto rounded-md border border-[#30363d] bg-[#0a0d14] p-4">
-                <pre className="font-mono text-xs whitespace-pre text-[#c9d1d9]">
+              <div className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--bg)] p-4">
+                <pre className="font-mono text-xs whitespace-pre text-[var(--fg)]">
                   {incident.logs}
                 </pre>
               </div>
@@ -163,10 +163,10 @@ export default function IncidentDetailPage({
           {/* Actions */}
           <div className="card flex items-center justify-between p-6">
             <div>
-              <h3 className="text-sm font-medium text-[#f0f6fc]">
+              <h3 className="text-sm font-medium text-[var(--fg)]">
                 Related Deployment
               </h3>
-              <p className="mt-1 text-sm text-[#8b949e]">
+              <p className="mt-1 text-sm text-[var(--muted)]">
                 View deployment history for this server
               </p>
             </div>
@@ -178,7 +178,7 @@ export default function IncidentDetailPage({
                   "View related deployment - INTEGRATION: Add deployment page",
                 );
               }}
-              className="rounded-lg border border-[#30363d] bg-[#21262d] px-4 py-2 text-sm font-medium text-[#c9d1d9] transition-colors hover:bg-[#30363d]"
+              className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--fg)] transition-colors hover:bg-[var(--border)]"
             >
               View Deployment
             </button>
