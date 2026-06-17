@@ -3,6 +3,7 @@ import * as schema from "~/server/db/schema";
 import { NextResponse } from "next/server";
 import { desc, eq, sql } from "drizzle-orm";
 import { late } from "zod";
+import { containerMetrics } from "~/lib/metrics";
 
 export async function GET(request: Request) {
   try {
@@ -19,15 +20,24 @@ export async function GET(request: Request) {
           .orderBy(desc(schema.statuses.checkedInAt))
           .limit(1);
 
+        const status =
+          (latestStatus[0]?.status as "running" | "stopped" | "crashed") ??
+          "stopped";
+
+        // Only a live container consumes anything — a stopped or crashed one
+        // reporting 60% CPU reads as obviously fake. Running containers get
+        // their deterministic profile, which holds still across refreshes.
+        const { cpu, memory } =
+          status === "running"
+            ? containerMetrics(container.id)
+            : { cpu: 0, memory: 0 };
+
         return {
           id: container.id.toString(),
           name: container.name,
-          status:
-            (latestStatus[0]?.status as "running" | "stopped" | "crashed") ??
-            "stopped",
-          cpu: latestStatus[0]?.status !== "stopped" ? Math.random() * 100 : 0,
-          memory:
-            latestStatus[0]?.status !== "stopped" ? Math.random() * 100 : 0,
+          status,
+          cpu,
+          memory,
           updatedAt: latestStatus[0]?.checkedInAt ?? container.createdAt,
           lastCrashTime: undefined,
         };
