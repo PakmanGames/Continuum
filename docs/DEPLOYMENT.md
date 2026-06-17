@@ -19,7 +19,7 @@ thing that goes to Vercel.
 | --- | --- | --- |
 | Framework | Next.js 15 (App Router) | Auto-detected by Vercel |
 | Package manager | **pnpm** 10.x (`pnpm-lock.yaml`) | Auto-detected by Vercel |
-| Database | Neon serverless Postgres via `drizzle-orm/neon-http` | `POSTGRES_URL` |
+| Database | Any Postgres via `drizzle-orm/postgres-js` | `POSTGRES_URL` |
 | Auth | [Clerk](https://clerk.com) (`@clerk/nextjs`) | Clerk publishable + secret keys |
 | Voice alerts (optional) | [ElevenLabs](https://elevenlabs.io) | `ELEVENLABS_API_KEY` |
 | SMS alerts (optional) | [Twilio](https://twilio.com) | Twilio account SID / token / numbers |
@@ -49,8 +49,9 @@ Before you start, create/collect the following. Everything here has a free tier.
 
 ## 3. Provision the database (Neon Postgres)
 
-The app talks to Postgres through Neon's HTTP driver, so you need a Neon database
-and its connection string.
+The app talks to Postgres over the standard wire protocol, so any provider works.
+This guide uses Neon because Vercel can provision it for you; substitute your own
+connection string if you host Postgres elsewhere.
 
 You have two options:
 
@@ -76,9 +77,21 @@ Do this *after* you import the project (Step 5). In the Vercel dashboard:
 
 4. Save this — it becomes the `POSTGRES_URL` value in Step 6.
 
-> **Any Postgres works in theory**, but the code uses `drizzle-orm/neon-http`
-> (`src/server/db/index.ts`), which is designed for Neon's serverless HTTP
-> endpoint. Neon is the path of least resistance.
+> **Any Postgres provider works.** `src/server/db/index.ts` connects with
+> `postgres.js` through `drizzle-orm/postgres-js`, which speaks the standard
+> Postgres wire protocol, so Neon, Railway, Supabase, RDS or a local instance are
+> all reachable with the right `POSTGRES_URL`. Neon stays the path of least
+> resistance only because Vercel provisions it for you.
+>
+> **TODO — make provider support genuinely universal.** The connection is opened
+> with no provider-specific tuning, which leaves two sharp edges. Serverless
+> deployments against a provider without a built-in pooler can exhaust
+> `max_connections`, because every warm function instance holds its own sockets.
+> Providers also disagree on TLS: some require `sslmode=require` in the URL, some
+> reject it. Worth designing a small adapter here that derives driver options
+> (`max`, `ssl`, `prepare`) from the connection URL or an explicit `DB_PROVIDER`
+> variable, so moving between providers is a config change rather than a code
+> change.
 
 ---
 
