@@ -296,28 +296,27 @@ Walk the end-to-end path, not just "the page loaded":
 
 ---
 
-## 10. Known limitation: real-time (SSE) updates on Vercel
+## 10. Real-time updates: the dashboard polls
 
-The dashboard subscribes to live updates over Server-Sent Events (`/api/events`,
-consumed by `src/hooks/use-data-updates.ts`). The server side uses an
-**in-memory** event emitter (`src/lib/websocket-server.ts`): when
-`POST /api/agent/data-ingest` receives new data, it calls
-`dataUpdateEmitter.notify()` to push an update to connected SSE clients.
+The dashboard keeps itself current by **polling** — it re-reads `/api/servers` and
+`/api/error` every few seconds (`src/app/dashboard/page.tsx`). There is nothing to
+configure, and it behaves the same locally and on Vercel.
 
-**This does not fan out reliably on Vercel.** Each serverless function invocation
-runs in an isolated instance, so a `notify()` triggered in one instance cannot
-reach an SSE stream held open by a *different* instance. In practice, live push
-updates will often not arrive in production. The app does not crash — clients just
-won't auto-refresh — but this is a genuine architectural mismatch with serverless.
+That is a deliberate choice rather than a fallback. The repository also contains a
+Server-Sent Events endpoint at `/api/events`, backed by an in-memory emitter
+(`src/lib/websocket-server.ts`) that `POST /api/agent/data-ingest` notifies when new
+data arrives. **No part of the UI consumes it**, because the pattern cannot work on
+serverless: each function invocation runs in an isolated instance, so a `notify()`
+raised in one instance can never reach an SSE stream held open by a different one.
+Push updates would silently fail to arrive in production.
 
-If real-time updates matter for your deployment, replace the in-process emitter
-with an external pub/sub, e.g.:
+If you later want real push rather than polling, the emitter has to move out of
+process — for example:
 
 - [Upstash Redis](https://upstash.com) pub/sub,
-- a hosted realtime service (Ably, Pusher), or
-- polling on the client as a simple fallback.
+- a hosted realtime service (Ably, Pusher).
 
-This is a code change, not a config change, and is out of scope for a first deploy.
+Either is a code change, not a config change, and is out of scope for a first deploy.
 
 ---
 
@@ -353,7 +352,9 @@ database. Re-run [Step 7](#7-push-the-database-schema) against the same database
 the deployment uses.
 
 **Live dashboard updates don't appear.**
-Expected on Vercel — see [Known limitation](#10-known-limitation-real-time-sse-updates-on-vercel).
+The dashboard polls every few seconds, so check the browser console for failing
+requests to `/api/servers` or `/api/error` — that is the refresh path. See
+[Real-time updates](#10-real-time-updates-the-dashboard-polls).
 
 ---
 

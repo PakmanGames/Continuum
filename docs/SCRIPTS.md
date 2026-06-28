@@ -113,6 +113,18 @@ it whenever the seeded check-ins have aged enough to look stale.
 > Requires containers to exist — run `db:seed-historical` first, or it exits
 > with a warning.
 
+### Seed data ages — refresh before a demo
+
+Both seeds place rows relative to *when they ran*, so a database seeded last week
+shows a fleet whose last check-in was days ago and a newest incident that is no
+longer recent. The dashboard's "Last 24 hours" tile and the right-hand edge of the
+incidents chart go empty as a result.
+
+`db:seed-heartbeats` is safe to re-run and fixes the check-in half. The incident half
+has no refresh path yet: re-running `db:seed-historical` **appends** a second set of
+ten incidents rather than restamping the existing ones. To genuinely reset it, clear
+`HW12_error` first and then re-seed.
+
 ---
 
 ## Environment
