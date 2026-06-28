@@ -1,421 +1,357 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
-import type { Server, Incident } from "~/lib/mock-data";
+import { useCallback, useEffect, useState } from "react";
+import {
+  AlertTriangle,
+  Boxes,
+  ChevronRight,
+  Timer,
+  TrendingUp,
+} from "lucide-react";
+
+import { cn } from "~/lib/cn";
+import {
+  Card,
+  Pulse,
+  StatTile,
+  StatusPill,
+  type Status,
+} from "../_components/ui";
+import { IncidentsChart } from "../_components/incidents-chart";
 import { PageTransition } from "../_components/page-transition";
-import { TrendGraph } from "~/app/_components/trend-graph";
-import { IncidentTimeline } from "~/app/_components/incident-timeline";
-import { useDataUpdates } from "~/hooks/use-data-updates";
+import { TrendGraph } from "../_components/trend-graph";
+
+/**
+ * How often the dashboard re-reads the API. The plan calls for polling rather
+ * than the in-memory SSE emitter, which cannot fan out across Vercel's isolated
+ * serverless instances (see docs/DEPLOYMENT.md §10).
+ */
+const POLL_MS = 5000;
+
+/** Row shape from `GET /api/error`. Timestamps arrive as ISO strings. */
+type IncidentRow = {
+  id: number;
+  containerId: number;
+  serviceName: string;
+  errorMessage: string;
+  explaination: string;
+  resolved: boolean;
+  resolvedAt: string | null;
+  occurredAt: string;
+};
+
+/** Row shape from `GET /api/servers`. */
+type FleetServer = {
+  id: string;
+  name: string;
+  status: "running" | "stopped" | "crashed";
+  cpu: number;
+  memory: number;
+  updatedAt: string;
+};
+
+const STATUS_PILL: Record<FleetServer["status"], Status> = {
+  running: "healthy",
+  crashed: "down",
+  stopped: "unknown",
+};
+
+const STATUS_LABEL: Record<FleetServer["status"], string> = {
+  running: "Running",
+  crashed: "Crashed",
+  stopped: "Stopped",
+};
+
+/** Mean time to resolve, in minutes, over incidents that actually closed. */
+function meanTimeToResolve(incidents: IncidentRow[]): number | null {
+  const closed = incidents.filter((i) => i.resolved && i.resolvedAt);
+  if (closed.length === 0) return null;
+
+  const totalMs = closed.reduce(
+    (sum, i) =>
+      sum + (new Date(i.resolvedAt!).getTime() - new Date(i.occurredAt).getTime()),
+    0,
+  );
+  return totalMs / closed.length / 60000;
+}
+
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  const hours = Math.floor(minutes / 60);
+  const rest = Math.round(minutes % 60);
+  return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
+}
+
+function relativeTime(iso: string): string {
+  const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+  if (!Number.isFinite(seconds)) return "—";
+  if (seconds < 60) return "just now";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}
 
 export default function DashboardPage() {
-  const [servers, setServers] = useState<Server[]>([]);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [servers, setServers] = useState<FleetServer[]>([]);
+  const [incidents, setIncidents] = useState<IncidentRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
-  const fetchData = useCallback(async () => {
+  /**
+   * `quiet` keeps the skeleton from reappearing on every poll — only the first
+   * load shows it, refreshes swap data underneath.
+   */
+  const load = useCallback(async (quiet = false) => {
     try {
-      setIsLoading(true);
+      if (!quiet) setIsLoading(true);
       setError(null);
 
-      // Fetch servers
-      const serversRes = await fetch("/api/servers");
-      if (!serversRes.ok) throw new Error("Failed to fetch servers");
-      const serversData = await serversRes.json();
-      setServers(serversData);
+      const [serversRes, errorsRes] = await Promise.all([
+        fetch("/api/servers"),
+        fetch("/api/error"),
+      ]);
+      if (!serversRes.ok) throw new Error("Failed to load the fleet");
+      if (!errorsRes.ok) throw new Error("Failed to load incidents");
 
-      // Fetch errors/incidents
-      try {
-        const errorsRes = await fetch("/api/error");
-        if (!errorsRes.ok) {
-          const errorData = await errorsRes.json().catch(() => ({}));
-          console.error("Error API response:", errorsRes.status, errorData);
-          throw new Error(
-            `Failed to fetch errors: ${errorsRes.status} ${errorData.error || ""}`,
-          );
-        }
-        const errorsData = await errorsRes.json();
-
-        // Transform errors to incidents format (matching database schema)
-        const incidentsData: Incident[] = errorsData.map((error: any) => ({
-          id: error.id?.toString() ?? "unknown",
-          serverId: error.containerId?.toString() ?? "unknown",
-          serverName: error.serviceName ?? "Unknown server",
-          timestamp: new Date(error.occurredAt),
-          logs: error.errorMessage ?? "",
-          aiSummary: error.explaination ?? "",
-          aiFix: error.suggestedFix ?? "",
-          resolved: error.resolved ?? false,
-        }));
-
-        setIncidents(incidentsData);
-      } catch (errorErr) {
-        console.error("Error fetching incidents:", errorErr);
-        // Set empty array instead of breaking the whole page
-        setIncidents([]);
-      }
+      setServers((await serversRes.json()) as FleetServer[]);
+      setIncidents((await errorsRes.json()) as IncidentRow[]);
+      setUpdatedAt(new Date());
     } catch (err) {
-      console.error("Error fetching data:", err);
+      console.error("Dashboard load failed:", err);
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Handle real-time updates
-  const handleUpdate = useCallback(() => {
-    console.log("🔔 Real-time update triggered!");
-    setLastUpdate(new Date());
-    fetchData();
-  }, [fetchData]);
-
-  // Listen for real-time updates
-  const { isConnected } = useDataUpdates(handleUpdate);
-
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+    void load();
+    const id = setInterval(() => void load(true), POLL_MS);
+    return () => clearInterval(id);
+  }, [load]);
 
-        // Fetch servers
-        const serversRes = await fetch("/api/servers");
-        if (!serversRes.ok) throw new Error("Failed to fetch servers");
-        const serversData = await serversRes.json();
-        setServers(serversData);
-
-        // Fetch errors/incidents
-        try {
-          const errorsRes = await fetch("/api/error");
-          if (!errorsRes.ok) {
-            const errorData = await errorsRes.json().catch(() => ({}));
-            console.error("Error API response:", errorsRes.status, errorData);
-            throw new Error(
-              `Failed to fetch errors: ${errorsRes.status} ${errorData.error || ""}`,
-            );
-          }
-          const errorsData = await errorsRes.json();
-
-          // Transform errors to incidents format (matching database schema)
-          const incidentsData: Incident[] = errorsData.map((error: any) => ({
-            id: error.id?.toString() ?? "unknown",
-            serverId: error.containerId?.toString() ?? "unknown",
-            serverName: error.serviceName ?? "Unknown server",
-            timestamp: new Date(error.occurredAt),
-            logs: error.errorMessage ?? "",
-            aiSummary: error.explaination ?? "",
-            aiFix: error.suggestedFix ?? "",
-            resolved: error.resolved ?? false,
-          }));
-
-          setIncidents(incidentsData);
-        } catch (errorErr) {
-          console.error("Error fetching incidents:", errorErr);
-          // Set empty array instead of breaking the whole page
-          setIncidents([]);
-        }
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError(err instanceof Error ? err.message : "Failed to load data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [fetchData]);
-
-  const activeServers = servers.filter((s) => s.status === "running").length;
-  const crashedServers = servers.filter((s) => s.status === "crashed").length;
-  const unresolvedIncidents = incidents.filter((i) => !i.resolved).length;
-  const errorsToday = incidents.filter(
-    (i) => i.timestamp.getTime() > Date.now() - 86400000,
+  const running = servers.filter((s) => s.status === "running").length;
+  const unhealthy = servers.length - running;
+  const open = incidents.filter((i) => !i.resolved).length;
+  const lastDay = incidents.filter(
+    (i) => new Date(i.occurredAt).getTime() > Date.now() - 86_400_000,
   ).length;
+  const mttr = meanTimeToResolve(incidents);
 
-  const recentIncidents = [...incidents]
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+  const recent = [...incidents]
+    .sort(
+      (a, b) =>
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
+    )
     .slice(0, 5);
+
+  const uptimeIncidents = incidents.map((i) => ({
+    serverId: i.containerId.toString(),
+    timestamp: i.occurredAt,
+  }));
 
   if (isLoading) {
     return (
-      <div className="mx-52 flex items-center justify-center py-12">
-        <p className="text-[var(--muted)]">Loading dashboard...</p>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="bg-surface-2 h-9 w-48 animate-pulse rounded" />
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div
+              key={i}
+              className="bg-surface-2 h-28 animate-pulse rounded-xl"
+            />
+          ))}
+        </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="bg-surface-2 h-64 animate-pulse rounded-xl" />
+          <div className="bg-surface-2 h-64 animate-pulse rounded-xl" />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="mx-52 flex items-center justify-center py-12">
-        <p className="text-[var(--danger)]">Error: {error}</p>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <Card className="flex flex-col items-center gap-4 py-16 text-center">
+          <AlertTriangle className="text-danger h-8 w-8" aria-hidden="true" />
+          <div>
+            <p className="text-fg font-medium">{error}</p>
+            <p className="text-muted mt-1 text-sm">
+              The dashboard retries automatically every few seconds.
+            </p>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
     <PageTransition>
-      <div className="mx-52 space-y-6">
-        <div className="flex items-center justify-between pt-6">
-          <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold text-[var(--fg)]">Dashboard</h1>
-            {isConnected && (
-              <div className="flex items-center gap-2 rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-xs">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--success)]" />
-                <span className="text-[var(--muted)]">Live</span>
-              </div>
-            )}
-            {lastUpdate && (
-              <span className="text-xs text-[var(--muted)]">
-                Updated {lastUpdate.toLocaleTimeString()}
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-fg text-3xl font-semibold">
+              Dashboard
+            </h1>
+            <p className="text-muted mt-1 text-sm">
+              {open > 0
+                ? `${open} incident${open === 1 ? "" : "s"} open across ${servers.length} containers.`
+                : `All quiet across ${servers.length} containers.`}
+            </p>
+          </div>
+          <div className="text-subtle flex items-center gap-2 text-xs">
+            <Pulse tone="success" />
+            Live
+            {updatedAt && (
+              <span className="text-subtle">
+                · updated {updatedAt.toLocaleTimeString()}
               </span>
             )}
           </div>
-        </div>
-        <TrendGraph incidents={incidents} />
+        </header>
 
-        {/* NEW: Timeline Section */}
-        <IncidentTimeline incidents={incidents} />
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="card flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--accent)]/30 bg-gradient-to-br from-[var(--accent)]/20 to-[var(--accent-strong)]/20">
-              <svg
-                className="h-6 w-6 text-[var(--accent)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
-                />
-              </svg>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-[var(--muted)]">
-                Active Agents
-              </p>
-              <p className="text-2xl font-semibold text-[var(--fg)]">
-                {activeServers}
-              </p>
-            </div>
-          </div>
-
-          <div className="card flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--danger)]/30 bg-gradient-to-br from-[var(--danger)]/20 to-[var(--danger)]/20">
-              <svg
-                className="h-6 w-6 text-[var(--danger)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-[var(--muted)]">
-                Crashed Servers
-              </p>
-              <p className="text-2xl font-semibold text-[var(--fg)]">
-                {crashedServers}
-              </p>
-            </div>
-          </div>
-
-          <div className="card flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--warning)]/30 bg-gradient-to-br from-[var(--warning)]/20 to-[var(--warning)]/20">
-              <svg
-                className="h-6 w-6 text-[var(--warning)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-[var(--muted)]">
-                Unresolved Incidents
-              </p>
-              <p className="text-2xl font-semibold text-[var(--fg)]">
-                {unresolvedIncidents}
-              </p>
-            </div>
-          </div>
-
-          <div className="card flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--border)] bg-gradient-to-br from-[var(--border)]/50 to-[var(--surface-2)]/50">
-              <svg
-                className="h-6 w-6 text-[var(--fg)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-[var(--muted)]">Errors Today</p>
-              <p className="text-2xl font-semibold text-[var(--fg)]">
-                {errorsToday}
-              </p>
-            </div>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatTile
+            label="Running"
+            value={running}
+            unit={`/ ${servers.length}`}
+            icon={Boxes}
+            delta={unhealthy > 0 ? `${unhealthy} not healthy` : "all healthy"}
+            deltaDirection={unhealthy > 0 ? "down" : "up"}
+          />
+          <StatTile
+            label="Open incidents"
+            value={open}
+            icon={AlertTriangle}
+            delta={`${incidents.length} all time`}
+          />
+          <StatTile
+            label="Mean time to resolve"
+            value={mttr === null ? "—" : formatDuration(mttr)}
+            icon={Timer}
+            delta={mttr === null ? "nothing resolved yet" : "across resolved"}
+          />
+          <StatTile
+            label="Last 24 hours"
+            value={lastDay}
+            icon={TrendingUp}
+            delta={lastDay === 0 ? "no new incidents" : "new incidents"}
+            deltaDirection={lastDay === 0 ? "up" : "down"}
+          />
         </div>
 
-        {/* Recent Incidents */}
-        <div className="card">
-          <div className="border-b border-[var(--border)] px-6 py-4">
-            <h2 className="text-lg font-semibold text-[var(--fg)]">
-              Recent Incidents
-            </h2>
-          </div>
-          <div className="divide-y divide-[var(--border)]">
-            {recentIncidents.length === 0 ? (
-              <div className="px-6 py-8 text-center text-[var(--muted)]">
-                No incidents found
-              </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <IncidentsChart timestamps={incidents.map((i) => new Date(i.occurredAt))} />
+          <TrendGraph incidents={uptimeIncidents} />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="overflow-hidden">
+            <div className="border-border flex items-center justify-between border-b px-5 py-4">
+              <h2 className="font-display text-fg text-sm font-semibold">
+                Recent incidents
+              </h2>
+            </div>
+            {recent.length === 0 ? (
+              <p className="text-muted px-5 py-12 text-center text-sm">
+                No incidents recorded yet.
+              </p>
             ) : (
-              recentIncidents.map((incident) => (
-                <Link
-                  key={incident.id}
-                  href={`/error/${incident.id}`}
-                  className="block px-6 py-4 transition-colors hover:bg-[var(--surface-2)]"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <p className="text-sm font-medium text-[var(--fg)]">
-                          {incident.serverName}
-                        </p>
-                        {!incident.resolved && (
-                          <span className="badge-error inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
-                            Active
-                          </span>
-                        )}
-                        {incident.resolved && (
-                          <span className="badge-success inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
-                            Resolved
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm text-[var(--fg)]">
-                        {incident.aiSummary}
-                      </p>
-                      <p className="mt-1 text-xs text-[var(--muted)]">
-                        {incident.timestamp.toLocaleString()}
-                      </p>
-                    </div>
-                    <svg
-                      className="h-5 w-5 text-[var(--muted)]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+              <ul className="divide-border divide-y">
+                {recent.map((incident) => (
+                  <li key={incident.id}>
+                    <Link
+                      href={`/error/${incident.id}`}
+                      className="hover:bg-surface-2 flex items-start gap-3 px-5 py-4 transition-colors"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-fg text-sm font-medium">
+                            {incident.serviceName}
+                          </span>
+                          <StatusPill
+                            status={incident.resolved ? "resolved" : "down"}
+                            label={incident.resolved ? "Resolved" : "Active"}
+                          />
+                        </div>
+                        <p className="text-muted mt-1 truncate text-sm">
+                          {incident.explaination}
+                        </p>
+                        <p className="text-subtle mt-1 text-xs">
+                          {relativeTime(incident.occurredAt)}
+                        </p>
+                      </div>
+                      <ChevronRight
+                        className="text-subtle mt-1 h-4 w-4 shrink-0"
+                        aria-hidden="true"
                       />
-                    </svg>
-                  </div>
-                </Link>
-              ))
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             )}
-          </div>
-        </div>
+          </Card>
 
-        {/* Active Servers Preview */}
-        <div className="card">
-          <div className="border-b border-[var(--border)] px-6 py-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[var(--fg)]">
-                Active Agents
+          <Card className="overflow-hidden">
+            <div className="border-border flex items-center justify-between border-b px-5 py-4">
+              <h2 className="font-display text-fg text-sm font-semibold">
+                Fleet
               </h2>
               <Link
                 href="/servers"
-                className="text-sm font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)]"
+                className="text-accent hover:text-accent-strong text-sm font-medium transition-colors"
               >
-                View all →
+                View all
               </Link>
             </div>
-          </div>
-          <div className="divide-y divide-[var(--border)]">
-            {servers.slice(0, 5).map((server) => (
-              <div key={server.id} className="px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-[var(--fg)]">
-                        {server.name}
-                      </p>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          server.status === "running"
-                            ? "badge-success"
-                            : server.status === "crashed"
-                              ? "badge-error"
-                              : "border border-[var(--border)] bg-[var(--border)] text-[var(--fg)]"
-                        }`}
-                      >
-                        {server.status}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex items-center space-x-4 text-xs text-[var(--muted)]">
-                      <span>CPU: {server.cpu.toFixed(1)}%</span>
-                      <span>Memory: {server.memory.toFixed(1)}%</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        const response = await fetch(
-                          `/api/servers/${server.id}/reset`,
-                          {
-                            method: "POST",
-                          },
-                        );
-                        if (!response.ok)
-                          throw new Error("Failed to reset server");
-                        // Refresh servers list
-                        const serversRes = await fetch("/api/servers");
-                        const serversData = await serversRes.json();
-                        setServers(serversData);
-                      } catch (err) {
-                        console.error("Error resetting server:", err);
-                        alert(`Failed to reset ${server.name}`);
-                      }
-                    }}
-                    className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-strong)] px-3 py-1.5 text-xs font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/20"
+            {servers.length === 0 ? (
+              <p className="text-muted px-5 py-12 text-center text-sm">
+                No containers reporting yet.
+              </p>
+            ) : (
+              <ul className="divide-border divide-y">
+                {servers.slice(0, 5).map((server) => (
+                  <li
+                    key={server.id}
+                    className="flex items-center justify-between gap-4 px-5 py-4"
                   >
-                    Reset
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-fg text-sm font-medium">
+                          {server.name}
+                        </span>
+                        <StatusPill
+                          status={STATUS_PILL[server.status]}
+                          label={STATUS_LABEL[server.status]}
+                        />
+                      </div>
+                      <p className="text-subtle mt-1 font-mono text-xs tabular-nums">
+                        {server.status === "running"
+                          ? `cpu ${server.cpu.toFixed(1)}% · mem ${server.memory.toFixed(1)}%`
+                          : `last seen ${relativeTime(server.updatedAt)}`}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "h-8 w-1 shrink-0 rounded-full",
+                        server.status === "running"
+                          ? "bg-success"
+                          : server.status === "crashed"
+                            ? "bg-danger"
+                            : "bg-border",
+                      )}
+                      aria-hidden="true"
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
         </div>
       </div>
     </PageTransition>
