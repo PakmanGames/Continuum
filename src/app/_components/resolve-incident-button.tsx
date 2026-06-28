@@ -2,54 +2,59 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Check, Loader2 } from "lucide-react";
 
-export function ResolveIncidentButton({ 
-  incidentId, 
-  onResolved 
-}: { 
+import { Button } from "./ui";
+
+export function ResolveIncidentButton({
+  incidentId,
+  onResolved,
+}: {
   incidentId: string;
   onResolved?: () => void;
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const router = useRouter();
 
   const handleResolve = async () => {
     setIsLoading(true);
+    setFailed(false);
     try {
       const response = await fetch(`/api/error/${incidentId}/resolve`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
+      if (!response.ok) throw new Error("Failed to resolve incident");
 
-      if (!response.ok) {
-        throw new Error("Failed to resolve incident");
-      }
-
-      // Call the callback to refetch data if provided
       if (onResolved) {
         onResolved();
       } else {
-        // Fallback: refresh the page
         router.refresh();
       }
     } catch (error) {
       console.error("Error resolving incident:", error);
-      alert("Failed to resolve incident. Please try again.");
+      setFailed(true);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <button
-      onClick={handleResolve}
-      disabled={isLoading}
-      className="rounded-lg bg-gradient-to-r from-[var(--success)] to-[var(--success)] px-4 py-2 text-sm font-medium text-white transition-all hover:shadow-lg hover:shadow-green-500/20 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {isLoading ? "Resolving..." : "Mark Resolved"}
-    </button>
+    <div className="flex items-center gap-3">
+      {failed && (
+        <span className="text-danger text-xs" role="alert">
+          Couldn&apos;t resolve — try again
+        </span>
+      )}
+      <Button size="sm" onClick={handleResolve} disabled={isLoading}>
+        {isLoading ? (
+          <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+        ) : (
+          <Check className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+        )}
+        {isLoading ? "Resolving…" : "Mark resolved"}
+      </Button>
+    </div>
   );
 }
-

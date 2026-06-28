@@ -1,191 +1,171 @@
 "use client";
 
-import { use, useEffect, useState, useCallback } from "react";
+import Link from "next/link";
+import { use, useCallback, useEffect, useState } from "react";
 import { notFound } from "next/navigation";
-import { ResolveIncidentButton } from "~/app/_components/resolve-incident-button";
+import { AlertTriangle, ArrowLeft, Sparkles, Wrench } from "lucide-react";
+
+import { Card, StatusPill } from "~/app/_components/ui";
 import { PageTransition } from "~/app/_components/page-transition";
-import type { Incident } from "~/lib/mock-data";
+import { ResolveIncidentButton } from "~/app/_components/resolve-incident-button";
+
+/** Row shape from `GET /api/error/[id]`. */
+type IncidentRow = {
+  id: number;
+  agentId: number;
+  containerId: number;
+  serviceName: string;
+  errorMessage: string;
+  explaination: string;
+  suggestedFix: string;
+  resolved: boolean;
+  resolvedAt: string | null;
+  occurredAt: string;
+};
 
 export default function IncidentDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const resolvedParams = use(params);
-  const [incident, setIncident] = useState<Incident | null>(null);
+  const { id } = use(params);
+  const [incident, setIncident] = useState<IncidentRow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchIncident = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
-      setIsLoading(true);
       setError(null);
-
-      const response = await fetch(`/api/error/${resolvedParams.id}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          notFound();
-        }
-        throw new Error("Failed to fetch incident");
-      }
-
-      const errorData = await response.json();
-
-      // Transform API data to Incident interface
-      const transformedIncident: Incident = {
-        id: errorData.id?.toString() ?? "unknown",
-        serverId: errorData.containerId?.toString() ?? "unknown",
-        serverName: errorData.serviceName ?? "Unknown server",
-        timestamp: new Date(errorData.occurredAt),
-        logs: errorData.errorMessage ?? "",
-        aiSummary: errorData.explaination ?? "",
-        aiFix: errorData.suggestedFix ?? "",
-        resolved: errorData.resolved ?? false,
-      };
-
-      setIncident(transformedIncident);
+      const response = await fetch(`/api/error/${id}`);
+      if (response.status === 404) notFound();
+      if (!response.ok) throw new Error("Failed to load this incident");
+      setIncident((await response.json()) as IncidentRow);
     } catch (err) {
-      console.error("Error fetching incident:", err);
+      console.error("Incident load failed:", err);
       setError(err instanceof Error ? err.message : "Failed to load incident");
     } finally {
       setIsLoading(false);
     }
-  }, [resolvedParams.id]);
+  }, [id]);
 
   useEffect(() => {
-    fetchIncident();
-  }, [fetchIncident]);
+    void load();
+  }, [load]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)]">
-        <div className="fixed inset-0 -z-10 gradient-bg opacity-50" />
-        <PageTransition>
-          <div className="w-full px-4 pt-6 pb-8 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-center py-12">
-              <p className="text-[var(--muted)]">Loading incident...</p>
-            </div>
-          </div>
-        </PageTransition>
+      <div className="mx-auto max-w-4xl space-y-4 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="bg-surface-2 h-9 w-64 animate-pulse rounded" />
+        <div className="bg-surface-2 h-32 animate-pulse rounded-xl" />
+        <div className="bg-surface-2 h-40 animate-pulse rounded-xl" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[var(--bg)]">
-        <div className="fixed inset-0 -z-10 gradient-bg opacity-50" />
-        <PageTransition>
-          <div className="w-full px-4 pt-6 pb-8 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-center py-12">
-              <p className="text-[var(--danger)]">Error: {error}</p>
-            </div>
-          </div>
-        </PageTransition>
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <Card className="flex flex-col items-center gap-4 py-16 text-center">
+          <AlertTriangle className="text-danger h-8 w-8" aria-hidden="true" />
+          <p className="text-fg font-medium">{error}</p>
+          <Link
+            href="/dashboard"
+            className="text-accent hover:text-accent-strong text-sm font-medium transition-colors"
+          >
+            Back to the dashboard
+          </Link>
+        </Card>
       </div>
     );
   }
 
-  if (!incident) {
-    notFound();
-  }
-  
-  return (
-    <div className="min-h-screen w-full bg-[var(--bg)]">
-      <div className="fixed inset-0 -z-10 gradient-bg opacity-50" />
-      <PageTransition>
-        <div className="w-full px-4 py-8 sm:px-6 lg:px-8">
-          <div className="w-full space-y-6">
-            <div className="flex items-center justify-between pt-6">
-            <div>
-              <h1 className="text-3xl font-bold text-[var(--fg)]">
-                Incident Details
-              </h1>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                {incident.serverName} • {incident.timestamp.toLocaleString()}
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              {incident.resolved ? (
-                <span className="badge-success inline-flex items-center rounded-full px-3 py-1 text-sm font-medium">
-                  Resolved
-                </span>
-              ) : (
-                <span className="badge-error inline-flex items-center rounded-full px-3 py-1 text-sm font-medium">
-                  Active
-                </span>
-              )}
-              {!incident.resolved && (
-                <ResolveIncidentButton 
-                  incidentId={incident.id} 
-                  onResolved={fetchIncident}
-                />
-              )}
-            </div>
-          </div>
+  if (!incident) notFound();
 
-          {/* AI Summary */}
-          <div className="card p-6">
-            <h2 className="mb-4 text-lg font-semibold text-[var(--fg)]">
-              AI Summary
-            </h2>
-            <p className="text-sm leading-relaxed text-[var(--fg)]">
-              {incident.aiSummary}
+  const occurred = new Date(incident.occurredAt);
+
+  return (
+    <PageTransition>
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <Link
+          href="/timeline"
+          className="text-muted hover:text-fg inline-flex items-center gap-2 text-sm transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Timeline
+        </Link>
+
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-display text-fg text-3xl font-semibold">
+                {incident.serviceName}
+              </h1>
+              <StatusPill
+                status={incident.resolved ? "resolved" : "down"}
+                label={incident.resolved ? "Resolved" : "Active"}
+              />
+            </div>
+            <p className="text-muted mt-1.5 text-sm">
+              <time dateTime={incident.occurredAt}>
+                {occurred.toLocaleString()}
+              </time>
+              {incident.resolved && incident.resolvedAt && (
+                <>
+                  {" · resolved "}
+                  <time dateTime={incident.resolvedAt}>
+                    {new Date(incident.resolvedAt).toLocaleString()}
+                  </time>
+                </>
+              )}
+              {" · agent "}
+              <span className="font-mono">#{incident.agentId}</span>
             </p>
           </div>
+          {!incident.resolved && (
+            <ResolveIncidentButton
+              incidentId={incident.id.toString()}
+              onResolved={load}
+            />
+          )}
+        </header>
 
-          {/* Suggested Fix */}
-          <div className="rounded-lg border border-[var(--accent)]/30 bg-gradient-to-br from-[var(--accent)]/10 to-[var(--accent-strong)]/10 p-6 backdrop-blur-sm">
-            <h2 className="mb-4 text-lg font-semibold text-[var(--accent)]">
-              Suggested Fix
+        <Card className="p-6">
+          <h2 className="font-display text-fg flex items-center gap-2 text-sm font-semibold">
+            <Sparkles className="text-accent h-4 w-4" aria-hidden="true" />
+            What the agent found
+          </h2>
+          <p className="text-muted mt-3 text-sm leading-relaxed">
+            {incident.explaination}
+          </p>
+        </Card>
+
+        <Card className="border-accent/30 bg-accent-soft p-6">
+          <h2 className="font-display text-fg flex items-center gap-2 text-sm font-semibold">
+            <Wrench className="text-accent h-4 w-4" aria-hidden="true" />
+            Suggested fix
+          </h2>
+          <div className="border-border bg-bg mt-3 overflow-x-auto rounded-md border p-4">
+            <pre className="text-fg font-mono text-sm whitespace-pre-wrap">
+              {incident.suggestedFix}
+            </pre>
+          </div>
+        </Card>
+
+        <Card className="overflow-hidden">
+          <div className="border-border border-b px-5 py-4">
+            <h2 className="font-display text-fg text-sm font-semibold">
+              Raw logs
             </h2>
-            <div className="rounded-md border border-[var(--border)] bg-[var(--bg)] p-4">
-              <pre className="font-mono text-sm whitespace-pre-wrap text-[var(--fg)]">
-                {incident.aiFix}
+          </div>
+          <div className="p-5">
+            <div className="border-border bg-bg max-h-80 overflow-auto rounded-md border p-4">
+              <pre className="text-muted font-mono text-xs whitespace-pre-wrap">
+                {incident.errorMessage}
               </pre>
             </div>
           </div>
-
-          {/* Raw Logs */}
-          <div className="card">
-            <div className="border-b border-[var(--border)] px-6 py-4">
-              <h2 className="text-lg font-semibold text-[var(--fg)]">Raw Logs</h2>
-            </div>
-            <div className="px-6 py-4">
-              <div className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--bg)] p-4">
-                <pre className="font-mono text-xs whitespace-pre text-[var(--fg)]">
-                  {incident.logs}
-                </pre>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="card flex items-center justify-between p-6">
-            <div>
-              <h3 className="text-sm font-medium text-[var(--fg)]">
-                Related Deployment
-              </h3>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                View deployment history for this server
-              </p>
-            </div>
-            {/* INTEGRATION: Replace with actual link */}
-            <button
-              onClick={() => {
-                // INTEGRATION: Navigate to deployment page
-                alert(
-                  "View related deployment - INTEGRATION: Add deployment page",
-                );
-              }}
-              className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--fg)] transition-colors hover:bg-[var(--border)]"
-            >
-              View Deployment
-            </button>
-          </div>
-          </div>
-        </div>
-      </PageTransition>
-    </div>
+        </Card>
+      </div>
+    </PageTransition>
   );
 }
