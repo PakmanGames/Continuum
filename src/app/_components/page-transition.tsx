@@ -46,10 +46,10 @@ export function PageTransition({
     <>
       {/* Loading indicator overlay */}
       {showLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d1117]/50 backdrop-blur-sm">
+        <div className="bg-bg/60 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
-            <div className="loading-spinner h-10 w-10 rounded-full border-4 border-[#30363d] border-t-[#58a6ff]" />
-            <p className="text-sm text-[#8b949e]">Loading...</p>
+            <div className="loading-spinner border-border border-t-accent h-10 w-10 rounded-full border-4" />
+            <p className="text-muted text-sm">Loading…</p>
           </div>
         </div>
       )}
