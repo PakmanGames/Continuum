@@ -8,6 +8,7 @@ import { Pulse } from "./ui/pulse";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/topology", label: "Topology" },
   { href: "/servers", label: "Servers" },
   { href: "/timeline", label: "Timeline" },
   { href: "/user", label: "Users" },
