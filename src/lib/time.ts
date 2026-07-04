@@ -1,0 +1,11 @@
+/** "just now", "4m ago", "3h ago", "2d ago" — for check-ins and timestamps. */
+export function relativeTime(iso: string): string {
+  const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+  if (!Number.isFinite(seconds)) return "—";
+  if (seconds < 60) return "just now";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}

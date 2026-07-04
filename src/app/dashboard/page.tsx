@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "~/lib/cn";
+import { relativeTime } from "~/lib/time";
 import {
   Card,
   Pulse,
@@ -81,17 +82,6 @@ function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const rest = Math.round(minutes % 60);
   return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
-}
-
-function relativeTime(iso: string): string {
-  const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-  if (!Number.isFinite(seconds)) return "—";
-  if (seconds < 60) return "just now";
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
 }
 
 export default function DashboardPage() {

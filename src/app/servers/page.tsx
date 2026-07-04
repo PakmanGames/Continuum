@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { RefreshCw, Server as ServerIcon } from "lucide-react";
 
 import { cn } from "~/lib/cn";
+import { relativeTime } from "~/lib/time";
 import {
   Button,
   Card,
@@ -41,17 +42,6 @@ const STATUS_LABEL: Record<FleetServer["status"], string> = {
   crashed: "Crashed",
   stopped: "Stopped",
 };
-
-function relativeTime(iso: string): string {
-  const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-  if (!Number.isFinite(seconds)) return "—";
-  if (seconds < 60) return "just now";
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
-}
 
 /**
  * Horizontal usage meter. Colour crosses into warning at 60% and danger at 80%,
