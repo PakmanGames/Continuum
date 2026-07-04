@@ -98,7 +98,7 @@ Do this *after* you import the project (Step 5). In the Vercel dashboard:
 ## 4. Set up Clerk authentication
 
 The app wraps every page in `<ClerkProvider>` (`src/app/layout.tsx`) and protects
-`/dashboard`, `/timeline`, `/servers`, `/user`, and `/error` routes via
+`/dashboard`, `/topology`, `/timeline`, `/servers`, `/user`, and `/error` routes via
 `src/middleware.ts`. Without Clerk keys, authentication (and those routes) will
 not work.
 

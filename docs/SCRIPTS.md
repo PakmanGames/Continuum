@@ -80,6 +80,18 @@ Vercel. Check before you run a write.
 Tables are prefixed `HW12_` (see `tablesFilter` in `drizzle.config.ts`), a
 holdover from the original hackathon project name.
 
+### Data model note
+
+The schema predates the topology view and does not capture the agent mesh. There is
+no `agents` table and no record of which agent watches which container: a
+`containers` row is also the identity the Python agent heartbeats under, and the
+agent's targets (`TARGET_CONTAINERS`) never reach the database. `GET /api/topology`
+therefore **derives** one agent per container and a ring of watch relationships at
+request time — see `src/lib/topology.ts`, which is the seam to replace. A future
+schema revision should model agents and watch relationships explicitly so that
+topologies other than a ring, and agents that watch several targets, become data
+rather than code.
+
 ### `db:push` vs `db:generate` + `db:migrate`
 
 `db:push` diffs your schema against the live database and applies the change
