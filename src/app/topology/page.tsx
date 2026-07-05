@@ -9,6 +9,7 @@ import type { Topology, TopologyNode } from "~/lib/topology";
 import { Card, Pulse, StatusPill } from "../_components/ui";
 import { PageTransition } from "../_components/page-transition";
 import { TopologyGraph } from "../_components/topology-graph";
+import { ChaosPanel } from "../_components/chaos-panel";
 
 /** Tight enough to feel live; the graph is small and the query is three reads. */
 const POLL_MS = 2000;
@@ -49,6 +50,9 @@ export default function TopologyPage() {
   const active = activeId ? (byId.get(activeId) ?? null) : null;
 
   const services = topology?.nodes.filter((n) => n.kind === "service") ?? [];
+  const healthyServices = services
+    .filter((s) => s.status === "running")
+    .map((s) => ({ id: s.id, name: s.name }));
   const unhealthy =
     topology?.nodes.filter((n) => n.health !== "healthy").length ?? 0;
 
@@ -122,11 +126,20 @@ export default function TopologyPage() {
               />
             </Card>
 
-            <NodeDetails
-              node={active}
-              byId={byId}
-              pinned={selected !== null && hovered === null}
-            />
+            <div className="space-y-4">
+              <NodeDetails
+                node={active}
+                byId={byId}
+                pinned={selected !== null && hovered === null}
+              />
+              <ChaosPanel
+                services={healthyServices}
+                onFocus={(id) => {
+                  setHovered(null);
+                  setSelected(id);
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
