@@ -30,8 +30,12 @@ pnpm run db:migrate
 # Any subsequent DB schema changes or table rewrites
 pnpm run db:push
 
-# Populate DB with mock data
+# Populate DB with mock data (run both)
 pnpm run db:seed-historical
+pnpm run db:seed-heartbeats
+
+# Clean up after rehearsing the chaos demo on /topology
+pnpm run db:chaos-reset
 
 # Lint related
 pnpm run lint

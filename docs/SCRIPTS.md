@@ -76,6 +76,7 @@ Vercel. Check before you run a write.
 | `pnpm db:studio` | Opens Drizzle Studio, a browser DB client. | Manual |
 | `pnpm db:seed-historical` | Seeds containers and ~90 days of incidents. | **Yes — data** |
 | `pnpm db:seed-heartbeats` | Seeds container check-ins. | **Yes — data** |
+| `pnpm db:chaos-reset` | Deletes every `[Chaos]` incident, then re-runs `db:seed-heartbeats`. Run before recording a demo. | **Yes — data** |
 
 Tables are prefixed `HW12_` (see `tablesFilter` in `drizzle.config.ts`), a
 holdover from the original hackathon project name.
@@ -112,6 +113,11 @@ has an open incident to show.
 > inserted unconditionally — running it twice gives you twenty incidents. To
 > start over, clear `HW12_error` first.
 
+**`db:chaos-reset`** → `src/scripts/chaos-reset.ts`, then `db:seed-heartbeats`
+
+Removes the incidents the chaos demo on `/topology` created and resets check-ins. See
+[Rehearsing the chaos demo](#rehearsing-the-chaos-demo).
+
 **`db:seed-heartbeats`** → `src/scripts/seed-heartbeats.ts`
 
 Writes 24 check-ins per container, one every 5 minutes over the last 2 hours.
@@ -137,6 +143,33 @@ has no refresh path yet: re-running `db:seed-historical` **appends** a second se
 ten incidents rather than restamping the existing ones. To genuinely reset it, clear
 `HW12_error` first and then re-seed.
 
+### Rehearsing the chaos demo
+
+The chaos demo on `/topology` is repeatable: each run crashes the chosen service on
+paper, heals it, and leaves a resolved `[Chaos]` incident behind (the newest five are
+kept, older ones are pruned automatically). The service is running again as soon as
+the run finishes, so you can run it back-to-back.
+
+Two things to know before recording:
+
+- **Agents go amber after 10 minutes.** Agent health is check-in freshness, and the
+  seed stamps check-ins at the moment it runs. Run `pnpm db:seed-heartbeats` right
+  before you record so every agent starts green.
+- **Trial runs show up on the dashboard and timeline** — that is the point, but the
+  chaos incidents resolve in seconds, so a few rehearsals pull the MTTR tile down
+  from the seeded 1h. For a clean slate, one command:
+
+  ```bash
+  pnpm db:chaos-reset
+  ```
+
+  It deletes every `[Chaos]` incident (real incidents are untouched — chaos rows
+  are identified by that log prefix) and then re-runs `db:seed-heartbeats`, which
+  resets check-ins to the seeded window and turns the agents green. It also
+  recovers from a run that failed mid-way and left a service crashed on paper.
+
+**Recording-day sequence:** `pnpm db:chaos-reset` → sign in → `/topology` → record.
+
 ---
 
 ## Environment
@@ -152,7 +185,13 @@ fails silently at runtime rather than loudly at build.
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Auth | No |
 | `CLERK_SECRET_KEY` | Auth | No |
 | `ELEVENLABS_API_KEY` | Voice alerts | Optional |
-| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_PHONE_NUMBER` / `ALERT_PHONE_NUMBER` | SMS alerts | Optional |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_PHONE_NUMBER` / `ALERT_PHONE_NUMBER` | Voice alerts | Optional |
+
+> **Setting the Twilio variables makes every `POST /api/agent/data-ingest` place a
+> real phone call** to `ALERT_PHONE_NUMBER`, and that endpoint is not authenticated.
+> Leave them unset on any deployment where the agent may fire often or where the
+> URL could be discovered. The chaos demo on `/topology` deliberately does not go
+> through the ingest path, so it never dials out.
 
 Running `pnpm dev` without Clerk keys drops Clerk into **keyless mode**, which
 generates a throwaway instance under `.clerk/` and appends to `.gitignore`.

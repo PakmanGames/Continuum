@@ -22,7 +22,7 @@ thing that goes to Vercel.
 | Database | Any Postgres via `drizzle-orm/postgres-js` | `POSTGRES_URL` |
 | Auth | [Clerk](https://clerk.com) (`@clerk/nextjs`) | Clerk publishable + secret keys |
 | Voice alerts (optional) | [ElevenLabs](https://elevenlabs.io) | `ELEVENLABS_API_KEY` |
-| SMS alerts (optional) | [Twilio](https://twilio.com) | Twilio account SID / token / numbers |
+| Voice alerts (optional) | [Twilio](https://twilio.com) | Twilio account SID / token / numbers |
 
 > **Not deployed to Vercel:** the `agent/` directory is a **separate Python /
 > Docker service** (the log-analysis agent). It is out of scope for the Vercel web
@@ -186,10 +186,14 @@ without them. Add them only if you want the corresponding feature.
 | Variable | Feature | Source |
 | --- | --- | --- |
 | `ELEVENLABS_API_KEY` | Voice alerts | ElevenLabs dashboard |
-| `TWILIO_ACCOUNT_SID` | SMS alerts | Twilio console |
-| `TWILIO_AUTH_TOKEN` | SMS alerts | Twilio console |
-| `TWILIO_PHONE_NUMBER` | SMS "from" number, e.g. `+15551234567` | Twilio console |
-| `ALERT_PHONE_NUMBER` | SMS "to" number, e.g. `+15557654321` | Your phone |
+| `TWILIO_ACCOUNT_SID` | Voice alerts | Twilio console |
+| `TWILIO_AUTH_TOKEN` | Voice alerts | Twilio console |
+| `TWILIO_PHONE_NUMBER` | Calling "from" number, e.g. `+15551234567` | Twilio console |
+| `ALERT_PHONE_NUMBER` | Number that gets called, e.g. `+15557654321` | Your phone |
+
+> **These place real calls.** With all four Twilio variables set, every incident the
+> agent ingests dials `ALERT_PHONE_NUMBER`. The ingest endpoint is unauthenticated,
+> so only set them on a deployment you control the traffic to.
 
 > **Empty strings are treated as undefined** (`emptyStringAsUndefined: true` in
 > `src/env.js`). Don't set an optional variable to an empty value — either give it
@@ -243,9 +247,12 @@ The schema lives in `src/server/db/schema.ts` and all tables are prefixed
 
    ```bash
    pnpm db:seed-historical
+   pnpm db:seed-heartbeats
    ```
 
-   This runs `src/scripts/seed-historical-incidents.ts` against the database in
+   The first creates containers and ninety days of incidents; the second seeds
+   the check-ins that decide whether each container reads as running or down —
+   without it the whole fleet shows as stopped. Both run against the database in
    your `.env`.
 
 5. **(Optional) Inspect the database** with Drizzle Studio:
@@ -279,7 +286,12 @@ Walk the end-to-end path, not just "the page loaded":
    successfully.
 3. **Database is wired.** With demo data seeded, the dashboard, `/timeline`, and
    `/servers` pages should show incidents/servers instead of empty states.
-4. **API is alive.** The agent ingestion endpoints exist at:
+4. **Topology and the chaos demo.** Signed in, open `/topology`: the agent ring
+   should draw with the seeded fleet. Pick a running service in the chaos panel
+   and inject a fault — the node should turn red within two seconds and heal a
+   few seconds later. This exercises the database round-trip both ways. Run
+   `pnpm db:chaos-reset` afterwards if you want the seeded state back.
+5. **API is alive.** The agent ingestion endpoints exist at:
    - `POST /api/agent/data-ingest` — insert an error/incident
    - `POST /api/agent/heartbeat` — record a container heartbeat
 
