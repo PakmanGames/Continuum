@@ -32,7 +32,7 @@ export default function StyleguidePage() {
           Track A · Design system
         </p>
         <h1 className="font-display text-fg mt-2 text-4xl font-semibold">
-          Continiuum UI
+          Continuum UI
         </h1>
         <p className="text-muted mt-3 max-w-2xl">
           Foundational tokens and primitives for the autonomous AI SRE. Electric
@@ -73,7 +73,7 @@ export default function StyleguidePage() {
           </div>
           <div className="px-5 py-4">
             <p className="text-fg text-lg">
-              Inter — body. Continiuum watches your services and heals them
+              Inter — body. Continuum watches your services and heals them
               before your users notice.
             </p>
             <p className="text-subtle mt-1 text-xs">UI text, prose, controls</p>

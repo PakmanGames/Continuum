@@ -49,7 +49,7 @@ export default function WaitlistPage() {
             className="font-display flex items-center gap-2 text-lg font-semibold"
           >
             <Pulse tone="accent" />
-            Continiuum
+            Continuum
           </Link>
           <Link
             href="/"
@@ -68,7 +68,7 @@ export default function WaitlistPage() {
             Private beta
           </p>
           <h1 className="font-display mt-6 text-4xl leading-[1.1] font-semibold tracking-tight sm:text-5xl">
-            Continiuum isn&apos;t open yet.
+            Continuum isn&apos;t open yet.
           </h1>
           <p className="text-muted mt-5 text-lg">
             We&apos;re still hardening the agent mesh against real production

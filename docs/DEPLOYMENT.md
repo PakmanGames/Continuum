@@ -1,6 +1,6 @@
-# Deploying Continiuum to Vercel
+# Deploying Continuum to Vercel
 
-This guide walks you through deploying the Continiuum incident-management dashboard
+This guide walks you through deploying the Continuum incident-management dashboard
 to [Vercel](https://vercel.com) from scratch. Follow it top to bottom and you will
 end up with a live, publicly reachable deployment backed by a managed Postgres
 database and Clerk authentication.
@@ -11,7 +11,7 @@ If you get stuck, jump to [Troubleshooting](#troubleshooting) at the bottom.
 
 ## 1. What you are deploying
 
-Continiuum is a **[Next.js 15](https://nextjs.org) app** (App Router, React 19,
+Continuum is a **[Next.js 15](https://nextjs.org) app** (App Router, React 19,
 Tailwind 4) built on the [T3 stack](https://create.t3.gg). The web app is the only
 thing that goes to Vercel.
 
@@ -150,7 +150,7 @@ Pick one fix:
 - **Repo fix:** change the submodule URL to HTTPS:
 
   ```bash
-  git submodule set-url examples/demo-1 https://github.com/PakmanGames/continiuum-continued-demo.git
+  git submodule set-url examples/demo-1 https://github.com/PakmanGames/continuum-continued-demo.git
   git commit -am "chore: use HTTPS URL for demo submodule"
   ```
 

@@ -31,7 +31,7 @@ export function Navigation() {
             className="font-display text-fg flex items-center gap-2 text-lg font-semibold"
           >
             <Pulse tone="accent" />
-            Continiuum
+            Continuum
           </Link>
           <div className="hidden items-center gap-1 md:flex">
             {navItems.map((item) => (

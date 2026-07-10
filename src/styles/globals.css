@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   Continiuum design tokens
+   Continuum design tokens
    Light is the default (:root) — the marketing landing and the app share one
    look. [data-theme="dark"] on a wrapper opts that subtree into dark (the
    landing hero's embedded product preview relies on it), and the planned

@@ -24,9 +24,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: "Continiuum — Autonomous AI SRE",
+  title: "Continuum — Autonomous AI SRE",
   description:
-    "Continiuum watches your containerized services, diagnoses failures with AI, and heals them before your users notice.",
+    "Continuum watches your containerized services, diagnoses failures with AI, and heals them before your users notice.",
 };
 
 export default function RootLayout({

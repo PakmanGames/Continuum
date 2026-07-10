@@ -139,7 +139,7 @@ export default function ServersPage() {
               Fleet
             </h1>
             <p className="text-muted mt-1 text-sm">
-              Every container reporting to Continiuum, and what its agent last
+              Every container reporting to Continuum, and what its agent last
               saw.
             </p>
           </div>
