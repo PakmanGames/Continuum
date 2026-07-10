@@ -66,14 +66,26 @@ export function ChaosPanel({
   const [inject, setInject] = useState<ChaosInjectResult | null>(null);
   const [heal, setHeal] = useState<ChaosHealResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** The service under test, fixed for the whole run. */
+  const [target, setTarget] = useState<{ id: string; name: string } | null>(
+    null,
+  );
 
   const cancelled = useRef(false);
   const openRun = useRef<{ containerId: number; incidentId: number } | null>(
     null,
   );
 
-  const chosen = services.find((s) => s.id === victim) ?? services[0] ?? null;
   const running = phase !== "idle" && phase !== "healed" && phase !== "failed";
+  // The last target stays selectable even while the poll hasn't yet returned it
+  // to the healthy list — otherwise the control blinks to a neighbour at the
+  // end of every run.
+  const options =
+    target && !services.some((s) => s.id === target.id)
+      ? [target, ...services]
+      : services;
+  const chosen =
+    options.find((s) => s.id === (victim || target?.id)) ?? options[0] ?? null;
 
   useEffect(() => {
     return () => {
@@ -98,6 +110,7 @@ export function ChaosPanel({
     setError(null);
     setInject(null);
     setHeal(null);
+    setTarget(chosen);
     setPhase("injecting");
     onFocus(chosen.id);
 
@@ -137,7 +150,10 @@ export function ChaosPanel({
   };
 
   const current = STEP_FOR[phase];
-  const agentName = chosen ? `agent-${chosen.id.slice(2)}` : "the agent";
+  // While a run is showing, everything labels the snapshotted target — never
+  // whatever the (now victim-less) dropdown happens to default to.
+  const shown = target ?? chosen;
+  const agentName = shown ? `agent-${shown.id.slice(2)}` : "the agent";
   const healSeconds =
     heal
       ? Math.max(
@@ -171,13 +187,13 @@ export function ChaosPanel({
           <select
             value={chosen?.id ?? ""}
             onChange={(e) => setVictim(e.target.value)}
-            disabled={running || services.length === 0}
+            disabled={running || options.length === 0}
             className="border-border bg-bg text-fg focus:border-accent mt-1 h-9 w-full rounded-md border px-2 font-mono text-xs outline-none disabled:opacity-60"
           >
-            {services.length === 0 ? (
+            {options.length === 0 ? (
               <option value="">no healthy services</option>
             ) : (
-              services.map((s) => (
+              options.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>
