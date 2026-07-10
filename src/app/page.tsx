@@ -15,8 +15,7 @@ import {
 } from "lucide-react";
 import { Pulse } from "./_components/ui/pulse";
 
-// TODO(Track E): point this at the real public repo before shipping the landing.
-const GITHUB_URL = "#";
+const GITHUB_URL = "https://github.com/PakmanGames/continuum-continued";
 
 const ctaPrimary =
   "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-medium text-accent-contrast transition-all hover:bg-accent-strong hover:shadow-glow";
@@ -46,7 +45,7 @@ export default async function HomePage() {
           <h1 className="font-display mt-6 text-5xl leading-[1.05] font-semibold tracking-tight sm:text-6xl">
             Your services break.
             <br />
-            <span className="text-accent">Continiuum heals them.</span>
+            <span className="text-accent">Continuum heals them.</span>
           </h1>
           <p className="text-muted mt-6 max-w-xl text-lg">
             A mesh of AI agents watches your containerized services, diagnoses
@@ -96,7 +95,7 @@ export default async function HomePage() {
         <SectionHeading
           eyebrow="Capabilities"
           title="More than monitoring. It acts."
-          subtitle="Continiuum sits on top of your container infra and does the parts a dashboard can't."
+          subtitle="Continuum sits on top of your container infra and does the parts a dashboard can't."
         />
         <div className="mt-12 grid gap-5 sm:grid-cols-2">
           <FeatureCard
@@ -107,12 +106,12 @@ export default async function HomePage() {
           <FeatureCard
             icon={Wand2}
             title="Self-healing"
-            body="Continiuum applies the fix automatically and rolls back if it doesn't take. The incident closes itself and lands in the timeline as resolved."
+            body="Continuum applies the fix automatically and rolls back if it doesn't take. The incident closes itself and lands in the timeline as resolved."
           />
           <FeatureCard
             icon={Phone}
             title="AI voice escalation"
-            body="When an incident needs a human, Continiuum phones your on-call and explains what's wrong in a natural voice — not one more notification to miss."
+            body="When an incident needs a human, Continuum phones your on-call and explains what's wrong in a natural voice — not one more notification to miss."
           />
           <FeatureCard
             icon={Network}
@@ -147,7 +146,7 @@ export default async function HomePage() {
               n="03"
               icon={Wand2}
               title="Heal"
-              body="The fix is applied and verified. If it doesn't hold, Continiuum rolls back and retries."
+              body="The fix is applied and verified. If it doesn't hold, Continuum rolls back and retries."
             />
             <Step
               n="04"
@@ -164,7 +163,7 @@ export default async function HomePage() {
         <SectionHeading
           eyebrow="Architecture"
           title="A thin layer over your containers"
-          subtitle="Drop an agent alongside your services. Everything else is Continiuum."
+          subtitle="Drop an agent alongside your services. Everything else is Continuum."
         />
         <div className="mt-12 flex flex-col items-stretch gap-4 lg:flex-row lg:items-center">
           <ArchBox
@@ -182,7 +181,7 @@ export default async function HomePage() {
           <ArchArrow />
           <ArchBox
             icon={Server}
-            title="Continiuum backend"
+            title="Continuum backend"
             body="Ingest + LLM diagnosis"
           />
           <ArchArrow />
@@ -205,7 +204,7 @@ export default async function HomePage() {
             Stop babysitting your services.
           </h2>
           <p className="text-muted relative mx-auto mt-4 max-w-xl">
-            Continiuum watches, diagnoses, and heals — so the pager stays quiet
+            Continuum watches, diagnoses, and heals — so the pager stays quiet
             and you ship instead of firefight.
           </p>
           <div className="relative mt-8 flex justify-center">
@@ -231,7 +230,7 @@ function SiteHeader() {
           className="font-display flex items-center gap-2 text-lg font-semibold"
         >
           <Pulse tone="accent" />
-          Continiuum
+          Continuum
         </Link>
         <nav className="text-muted hidden items-center gap-8 text-sm md:flex">
           <a href="#features" className="hover:text-fg transition-colors">
@@ -252,6 +251,12 @@ function SiteHeader() {
             <Github className="h-4 w-4" />
             GitHub
           </a>
+          <Link
+            href="/sign-in"
+            className="text-muted hover:text-fg hidden text-sm transition-colors sm:inline"
+          >
+            Sign in
+          </Link>
           <Link
             href="/waitlist"
             className="bg-accent text-accent-contrast hover:bg-accent-strong hover:shadow-glow inline-flex h-9 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-all"
@@ -490,7 +495,7 @@ function SiteFooter() {
             className="font-display flex w-fit items-center gap-2 text-lg font-semibold"
           >
             <Pulse tone="accent" />
-            Continiuum
+            Continuum
           </Link>
           <p className="text-muted mt-3 max-w-xs text-sm">
             Self-healing infrastructure for containerized services.
@@ -512,7 +517,7 @@ function SiteFooter() {
       </div>
       <div className="border-border border-t">
         <div className="text-subtle mx-auto max-w-6xl px-6 py-6 text-sm">
-          © {new Date().getFullYear()} Continiuum
+          © {new Date().getFullYear()} Continuum
         </div>
       </div>
     </footer>
