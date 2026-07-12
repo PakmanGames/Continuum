@@ -93,7 +93,7 @@ export default function TopologyPage() {
           </Card>
         ) : !topology ? (
           <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-            <div className="bg-surface-2 aspect-square w-full max-w-[600px] animate-pulse justify-self-center rounded-xl" />
+            <div className="bg-surface-2 aspect-square w-full max-w-[520px] animate-pulse justify-self-center rounded-xl" />
             <div className="bg-surface-2 h-64 animate-pulse rounded-xl" />
           </div>
         ) : services.length === 0 ? (

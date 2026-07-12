@@ -87,7 +87,9 @@ export function TopologyGraph({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="mx-auto w-full max-w-[600px]">
+      {/* Capped so the whole ring plus the legend fit a 1440×900 viewport
+          without scrolling — the graph was clipping its bottom node. */}
+      <div className="mx-auto w-full max-w-[520px]">
         <svg
           viewBox={`0 0 ${SIZE} ${SIZE}`}
           className="h-auto w-full"

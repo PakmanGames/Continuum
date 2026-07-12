@@ -20,24 +20,23 @@ import {
 } from "~/app/_components/ui";
 
 /**
- * Internal design-system reference for Track A. Renders every token and
- * primitive so the foundation can be verified at a glance and reused
- * consistently as Tracks B and C are built out. Not linked from the app nav.
+ * Design-system reference. Renders every token and primitive so the foundation
+ * can be checked at a glance and reused consistently. Not linked from the nav.
  */
 export default function StyleguidePage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-12">
       <header className="mb-12">
         <p className="text-accent font-mono text-xs tracking-widest uppercase">
-          Track A · Design system
+          Design system
         </p>
         <h1 className="font-display text-fg mt-2 text-4xl font-semibold">
           Continuum UI
         </h1>
         <p className="text-muted mt-3 max-w-2xl">
           Foundational tokens and primitives for the autonomous AI SRE. Electric
-          indigo/violet accent, dark-first app surfaces, and the heartbeat pulse
-          as the signature motif.
+          indigo/violet accent, light surfaces with a dark theme behind a toggle,
+          and the heartbeat pulse as the signature motif.
         </p>
       </header>
 
