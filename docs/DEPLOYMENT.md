@@ -291,7 +291,10 @@ Walk the end-to-end path, not just "the page loaded":
    and inject a fault — the node should turn red within two seconds and heal a
    few seconds later. This exercises the database round-trip both ways. Run
    `pnpm db:chaos-reset` afterwards if you want the seeded state back.
-5. **API is alive.** The agent ingestion endpoints exist at:
+5. **On-call roster.** Open `/user`, add a person, then remove them via the inline
+   confirm. Both go through server actions straight to the database, so this is
+   the quickest write-path check that doesn't touch the fleet.
+6. **API is alive.** The agent ingestion endpoints exist at:
    - `POST /api/agent/data-ingest` — insert an error/incident
    - `POST /api/agent/heartbeat` — record a container heartbeat
 

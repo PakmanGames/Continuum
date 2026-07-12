@@ -23,7 +23,7 @@ It watches your containers, diagnoses failures with an LLM, and escalates to a h
 
 - **Watches.** A lightweight Python agent runs beside your containers, tails their logs and state, and heartbeats to the control plane.
 - **Diagnoses.** When a container fails, the agent sends the evidence to Gemini and gets back a plain-English explanation and a proposed fix — not a wall of logs.
-- **Escalates.** If a human needs to be in the loop, Continuum phones the on-call engineer with a spoken summary of the incident.
+- **Escalates.** If a human needs to be in the loop, Continuum phones whoever is on the on-call roster with a spoken summary of the incident.
 - **Shows you the mesh.** A live topology view draws every service, the agent watching it, and the agent watching *that* agent — so a dead watcher is itself noticed.
 
 ## Try it
@@ -152,6 +152,7 @@ To run a real agent against your containers, see [`agent/`](./agent) and point `
 
 ```
 src/app/            pages and API routes (App Router)
+  dashboard/ topology/ servers/ timeline/ user/   the signed-in app (user = on-call roster)
   _components/      design-system primitives, charts, the topology graph, the chaos panel
   api/              agent ingest, fleet, incidents, topology, chaos, waitlist
 src/lib/            metrics, topology and chaos contracts, shared helpers
