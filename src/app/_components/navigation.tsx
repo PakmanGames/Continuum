@@ -11,7 +11,7 @@ const navItems = [
   { href: "/topology", label: "Topology" },
   { href: "/servers", label: "Servers" },
   { href: "/timeline", label: "Timeline" },
-  { href: "/user", label: "Users" },
+  { href: "/user", label: "On-call" },
 ];
 
 export function Navigation() {
