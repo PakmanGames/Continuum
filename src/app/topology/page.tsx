@@ -178,6 +178,7 @@ function NodeDetails({
         <div className="min-w-0">
           <p className="text-subtle text-xs font-medium tracking-wide uppercase">
             {node.kind}
+            {node.source === "seed" && " · demo"}
             {pinned && " · pinned"}
           </p>
           <h2 className="text-fg mt-1 truncate font-mono text-lg font-semibold">

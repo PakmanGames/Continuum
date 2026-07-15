@@ -194,7 +194,7 @@ export function TopologyGraph({
                 onMouseEnter={() => onHover(node.id)}
                 onClick={() => onSelect(node.id)}
               >
-                <title>{`${node.name} · ${node.health}`}</title>
+                <title>{`${node.name} · ${node.health}${node.source === "seed" ? " · demo" : ""}`}</title>
 
                 {node.health === "healthy" && (
                   <circle

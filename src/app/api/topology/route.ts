@@ -7,6 +7,7 @@ import { containerMetrics } from "~/lib/metrics";
 import {
   AGENT_FRESH_MS,
   AGENT_STALE_MS,
+  type ContainerSource,
   type NodeHealth,
   type ServiceStatus,
   type Topology,
@@ -58,6 +59,7 @@ export async function GET() {
       const agentId = `a:${container.id}`;
       const checkIn = latest.get(container.id);
       const lastSeen = checkIn?.checkedInAt.toISOString() ?? null;
+      const source = container.source as ContainerSource;
 
       const status = (checkIn?.status as ServiceStatus | undefined) ?? "stopped";
       const openIncidents = openByContainer.get(container.id) ?? 0;
@@ -77,6 +79,7 @@ export async function GET() {
         health: serviceHealth,
         watches: [],
         lastSeen,
+        source,
         status,
         openIncidents,
         ...(status === "running" ? containerMetrics(container.id) : {}),
@@ -106,6 +109,7 @@ export async function GET() {
         health: agentHealth,
         watches,
         lastSeen,
+        source,
       });
 
       for (const to of watches) edges.push({ from: agentId, to });

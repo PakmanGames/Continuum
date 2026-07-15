@@ -12,6 +12,9 @@ export type NodeHealth = "healthy" | "degraded" | "down" | "unknown";
 
 export type ServiceStatus = "running" | "stopped" | "crashed";
 
+/** `seed` = the demo fleet from the seed scripts; `live` = registered by an agent. */
+export type ContainerSource = "seed" | "live";
+
 export type TopologyNode = {
   /** `c:<containerId>` for a service, `a:<containerId>` for its agent. */
   id: string;
@@ -22,6 +25,8 @@ export type TopologyNode = {
   watches: string[];
   /** Newest check-in for the underlying container, ISO string. */
   lastSeen: string | null;
+  /** Seed-fleet nodes (and their derived agents) are labelled "demo" in the UI. */
+  source: ContainerSource;
   status?: ServiceStatus;
   openIncidents?: number;
   cpu?: number;
