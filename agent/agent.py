@@ -19,6 +19,14 @@ class GeminiResponse(BaseModel):
 gemini_api = os.environ.get("GENAI_API_KEY")
 backend_route = os.environ.get("AGENT_BACKEND_URL")
 agent_id = int(os.environ.get("AGENT_ID"))
+agent_token = os.environ.get("AGENT_TOKEN", "")
+
+# Every call to the control plane carries the shared secret; without it the
+# backend answers 401 (or 503 if the deployment has no token configured).
+AUTH_HEADERS = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {agent_token}",
+}
 
 # File extensions to include when analyzing repo
 CODE_EXTENSIONS = {'.py', '.js', '.ts', '.tsx', '.jsx', '.java', '.cpp', '.c', '.h', 
@@ -27,11 +35,8 @@ CODE_EXTENSIONS = {'.py', '.js', '.ts', '.tsx', '.jsx', '.java', '.cpp', '.c', '
 
 
 def post_status( service_name :str, error_logs: str, explanation: str, suggestion: str, time: datetime.datetime):
-    headers = {
-        "Content-Type": "application/json",
-        # "Authorization": f"Bearer"
-    }
-    
+    headers = AUTH_HEADERS
+
     payload = {
         "agentId": agent_id,
         "containerId": agent_id,
@@ -214,6 +219,10 @@ def extract_repo_contents(repo_dir: str, max_size_mb: int = 10) -> str:
     return result
 
 
+# PROVIDER SEAM — this is the only place the agent talks to an LLM. M3 replaces
+# it with an OpenAI-compatible adapter (LLM_BASE_URL / LLM_API_KEY / LLM_MODEL)
+# so any provider's key works; see docs/DEVELOPMENT_PLAN.md §6. Callers only
+# ever see the {explanation, suggestedFix} dict.
 def get_gemini_response(prompt: str) -> str:
     client = genai.Client(api_key=gemini_api)
     response = client.models.generate_content(
@@ -230,14 +239,11 @@ def get_gemini_response(prompt: str) -> str:
 
 def heartbeat():
     heartbeat_route = f"{backend_route}/api/agent/heartbeat"
-    headers = {
-        "Content-Type": "application/json",
-        # "Authorization": f"Bearer"
-    }
+    headers = AUTH_HEADERS
 
     payload = {
         "containerId": agent_id,
-        "timestamp": datetime.datetime.utcnow().isoformat()
+        "checkedInAt": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
     try:

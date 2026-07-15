@@ -5,8 +5,14 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - GENAI_API_KEY=${GENAI_API_KEY}
-      - AGENT_BACKEND_URL=${AGENT_BACKEND_URL:-http://localhost:3000}
+      # Inside a container "localhost" is the container itself; this is how
+      # Docker Desktop reaches a `pnpm dev` running on the laptop.
+      - AGENT_BACKEND_URL=${AGENT_BACKEND_URL:-http://host.docker.internal:3000}
+      - AGENT_TOKEN=${AGENT_TOKEN}
       - AGENT_ID=${AGENT_ID:-1}
+      - TARGET_CONTAINERS=${TARGET_CONTAINERS:-demo-backend,demo-frontend}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - internal
     restart: always
@@ -30,7 +36,7 @@ services:
 
   demo-backend:
     build:
-      context: ./repo
+      context: ../examples/demo-1
       dockerfile: Dockerfile.backend
     container_name: demo-backend
     restart: "no"
@@ -41,7 +47,7 @@ services:
       - FLASK_ENV=production
       - FLASK_DEBUG=0
       - DATABASE_URL=postgresql://app_user:app_password@demo-database:5432/app_db
-      - GIT_REPO_URL=https://github.com/sokosam/HW12-demo
+      - GIT_REPO_URL=https://github.com/PakmanGames/continuum-continued-demo
     depends_on:
       demo-database:
         condition: service_healthy
@@ -50,7 +56,7 @@ services:
 
   demo-frontend:
     build:
-      context: ./repo
+      context: ../examples/demo-1
       dockerfile: Dockerfile.frontend
     container_name: demo-frontend
     restart: "no"
@@ -58,7 +64,7 @@ services:
       - "3001:3000"
     environment:
       - PYTHONUNBUFFERED=1
-      - GIT_REPO_URL=https://github.com/sokosam/HW12-demo
+      - GIT_REPO_URL=https://github.com/PakmanGames/continuum-continued-demo
     depends_on:
       - demo-backend
     networks:
