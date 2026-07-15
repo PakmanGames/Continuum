@@ -129,7 +129,7 @@ async function seedHistoricalIncidents() {
 
       if (existing.length === 0) {
         // Create container
-        await db.insert(schema.containers).values({ name });
+        await db.insert(schema.containers).values({ name, source: "seed" });
         console.log(`  ✓ Created container: ${name}`);
       }
     }

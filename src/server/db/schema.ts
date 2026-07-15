@@ -15,6 +15,13 @@ export const createTable = pgTableCreator((name) => `HW12_${name}`);
 export const containers = createTable("container", (d) => ({
   id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
   name: d.varchar({ length: 256 }).notNull(),
+  /**
+   * Where the row came from. `seed` rows are the demo fleet the seed scripts
+   * create; `live` rows are registered by a running agent. The topology labels
+   * seed nodes "demo" so both can share one database — and one screen —
+   * without pretending the seeded fleet is real.
+   */
+  source: d.varchar({ length: 8 }).default("live").notNull(),
   createdAt: d
     .timestamp({ withTimezone: true })
     .default(sql`NOW()`)
