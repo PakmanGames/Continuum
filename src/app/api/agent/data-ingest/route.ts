@@ -6,7 +6,6 @@ import twilio from "twilio";
 import { db } from "~/server/db";
 import * as schema from "~/server/db/schema";
 import { env } from "~/env";
-import { dataUpdateEmitter } from "~/lib/websocket-server";
 
 const ingestPayload = z.object({
   agentId: z.number().int().positive(),
@@ -49,10 +48,6 @@ export async function POST(request: Request) {
         payload.suggestedFix ?? "No suggested fix provided by the agent.",
       occurredAt,
     });
-
-    console.log("Data inserted successfully, notifying clients...");
-    // Notify all connected clients of the data update immediately after DB insert
-    dataUpdateEmitter.notify();
 
     // Optional: Generate audio with ElevenLabs and make Twilio call
     let audioSize = 0;
