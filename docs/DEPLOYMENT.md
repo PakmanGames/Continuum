@@ -190,6 +190,11 @@ without them. Add them only if you want the corresponding feature.
 | `TWILIO_AUTH_TOKEN` | Voice alerts | Twilio console |
 | `TWILIO_PHONE_NUMBER` | Calling "from" number, e.g. `+15551234567` | Twilio console |
 | `ALERT_PHONE_NUMBER` | Number that gets called, e.g. `+15557654321` | Your phone |
+| `AGENT_TOKEN` | Shared secret the Python agent presents on `/api/agent/*` | Generate: `python3 -c 'import secrets; print(secrets.token_hex(24))'` |
+
+> **`AGENT_TOKEN` is only needed if you run an agent** — but until it is set, every
+> `/api/agent/*` route answers `503`, so a deployment never has an open ingest
+> endpoint by accident. Set the same value in the agent's own `.env`.
 
 > **These place real calls.** With all four Twilio variables set, every incident the
 > agent ingests dials `ALERT_PHONE_NUMBER`. The ingest endpoint is unauthenticated,
@@ -298,16 +303,19 @@ Walk the end-to-end path, not just "the page loaded":
    - `POST /api/agent/data-ingest` — insert an error/incident
    - `POST /api/agent/heartbeat` — record a container heartbeat
 
-   You can smoke-test the heartbeat with `curl` (adjust `containerId` to a valid one):
+   Both require the agent token. Smoke-test the heartbeat with `curl` (adjust
+   `containerId` to a valid one):
 
    ```bash
    curl -X POST https://<project>.vercel.app/api/agent/heartbeat \
      -H "Content-Type: application/json" \
-     -d '{"containerId": 1}'
+     -H "Authorization: Bearer $AGENT_TOKEN" \
+     -d '{"containerId": 1, "status": "running"}'
    ```
 
    A `200` with `{"message":"Heartbeat recorded successfully"}` means the API and
-   database round-trip works.
+   database round-trip works. A `503` means `AGENT_TOKEN` is not set on the
+   deployment; a `401` means it doesn't match.
 
 ---
 
@@ -384,13 +392,18 @@ Its configuration (`agent/.env.example`) includes:
 
 | Variable | Purpose |
 | --- | --- |
-| `GENAI_API_KEY` | Google Gemini API key |
-| `AGENT_BACKEND_URL` | URL of this deployed web app (e.g. `https://<project>.vercel.app`) |
+| `GENAI_API_KEY` | Google Gemini API key. Without it the agent still detects and reports; diagnoses read "unavailable". |
+| `AGENT_BACKEND_URL` | URL of this web app. From inside Docker Desktop a laptop `pnpm dev` is `http://host.docker.internal:3000`, not `localhost`. |
+| `AGENT_TOKEN` | Must equal the control plane's `AGENT_TOKEN`. |
 | `AGENT_ID` | Identifier for this agent instance |
+| `TARGET_CONTAINERS` | Comma-separated Docker container names to watch |
 | `GIT_REPO_URL` | (Optional) repo the agent clones for deeper analysis |
 
-Point `AGENT_BACKEND_URL` at your Vercel deployment so the agent's heartbeats and
-ingested data land in the right place.
+`agent/docker-compose.yml` also brings up a three-container demo fleet
+(`demo-database`, `demo-backend`, `demo-frontend`) built from the
+`examples/demo-1` submodule — run `git submodule update --init examples/demo-1`
+first. Point `AGENT_BACKEND_URL` at your deployment so the agent's heartbeats and
+ingested incidents land in the right place.
 
 ---
 
@@ -414,3 +427,4 @@ pnpm run dev                 # http://localhost:3000
 - [ ] `CLERK_SECRET_KEY` (required)
 - [ ] `ELEVENLABS_API_KEY` (optional)
 - [ ] `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_PHONE_NUMBER` / `ALERT_PHONE_NUMBER` (optional)
+- [ ] `AGENT_TOKEN` (only if you run an agent; routes answer 503 without it)

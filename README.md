@@ -146,7 +146,7 @@ pnpm dev                    # http://localhost:3000
 
 Every script — what it does and which ones write to the database — is in [SCRIPTS.md](./docs/SCRIPTS.md). Before recording or demoing, `pnpm db:chaos-reset` puts the seeded fleet back to its starting state.
 
-To run a real agent against your containers, see [`agent/`](./agent) and point `AGENT_BACKEND_URL` at your control plane.
+To run a real agent against your containers, see [`agent/`](./agent): set the same `AGENT_TOKEN` on both sides, point `AGENT_BACKEND_URL` at your control plane, and `docker compose up` brings up the agent alongside a three-container demo fleet to watch.
 
 ## Repository layout
 
@@ -171,6 +171,7 @@ Continuum started as a hackathon project and the surface area is deliberately sm
 - **First-class agents in the schema.** The topology is derived from the container list. Modelling agents and watch relationships explicitly unlocks arbitrary topologies and multi-target agents.
 - **Container telemetry.** CPU and memory are synthesized until the agent reports `docker stats` with each heartbeat.
 - **Narrated escalation calls.** ElevenLabs audio is generated today but Twilio still speaks the alert itself; serving the generated audio to the call is the missing piece.
+- **Bring your own model.** The diagnosis step is a single seam in the agent. It will accept any OpenAI-compatible endpoint — OpenAI, Gemini, Anthropic, Groq, a local model — through `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL`, instead of being tied to one provider.
 - **Public status page** and moving the agent mesh onto always-on compute alongside the database.
 
 ## Origins

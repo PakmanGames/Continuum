@@ -100,6 +100,13 @@ directly — no migration file, no history. Good for local iteration. Use
 `db:generate` + `db:migrate` when you want the change reviewed in a PR and
 replayed identically on another environment.
 
+The migration history in `drizzle/` starts from a baseline generated in September
+2026 (`0000_…`) that matches the production database; everything after it is a
+real, replayable change. A database that was created with `db:push` before that
+baseline already has the tables, so `db:migrate` would fail trying to create
+them again — record the baseline as applied first (one row in
+`drizzle.__drizzle_migrations` with the file's SHA-256 and the journal's `when`).
+
 ### The seed scripts
 
 **`db:seed-historical`** → `src/scripts/seed-historical-incidents.ts`
@@ -186,11 +193,12 @@ fails silently at runtime rather than loudly at build.
 | `CLERK_SECRET_KEY` | Auth | No |
 | `ELEVENLABS_API_KEY` | Voice alerts | Optional |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_PHONE_NUMBER` / `ALERT_PHONE_NUMBER` | Voice alerts | Optional |
+| `AGENT_TOKEN` | The Python agent's access to `/api/agent/*` — routes answer 503 until it is set | Optional |
 
 > **Setting the Twilio variables makes every `POST /api/agent/data-ingest` place a
-> real phone call** to `ALERT_PHONE_NUMBER`, and that endpoint is not authenticated.
-> Leave them unset on any deployment where the agent may fire often or where the
-> URL could be discovered. The chaos demo on `/topology` deliberately does not go
+> real phone call** to `ALERT_PHONE_NUMBER`. The endpoint is gated by `AGENT_TOKEN`,
+> so keep that token secret, and leave the Twilio variables unset on any deployment
+> where the agent may fire often. The chaos demo on `/topology` deliberately does not go
 > through the ingest path, so it never dials out.
 
 Running `pnpm dev` without Clerk keys drops Clerk into **keyless mode**, which
