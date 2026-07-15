@@ -6,6 +6,7 @@ import twilio from "twilio";
 import { db } from "~/server/db";
 import * as schema from "~/server/db/schema";
 import { env } from "~/env";
+import { requireAgent } from "~/server/agent-auth";
 
 const ingestPayload = z.object({
   agentId: z.number().int().positive(),
@@ -19,6 +20,9 @@ const ingestPayload = z.object({
 });
 
 export async function POST(request: Request) {
+  const denied = requireAgent(request);
+  if (denied) return denied;
+
   try {
     const payload = ingestPayload.parse(await request.json());
 

@@ -16,6 +16,8 @@ export const env = createEnv({
     TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
     TWILIO_PHONE_NUMBER: z.string().min(1).optional(),
     ALERT_PHONE_NUMBER: z.string().min(1).optional(),
+    /** Shared secret the agent presents as a Bearer token on /api/agent/*. */
+    AGENT_TOKEN: z.string().min(16).optional(),
   },
 
   /**
@@ -39,6 +41,7 @@ export const env = createEnv({
     TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
     TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
     ALERT_PHONE_NUMBER: process.env.ALERT_PHONE_NUMBER,
+    AGENT_TOKEN: process.env.AGENT_TOKEN,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
