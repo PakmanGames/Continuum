@@ -1,22 +1,26 @@
 /**
  * Shapes shared by `GET /api/topology` and the graph that renders it.
  *
- * The database has no notion of an agent or of who watches whom — a `containers`
- * row doubles as an agent's identity (the Python agent heartbeats under its own
- * id), and its targets never reach the DB. So the topology is *derived*: one
- * agent per container, wired into a ring. If the schema ever grows `agents` and
- * `watches` tables, this module is the seam — the graph only knows these types.
+ * Two kinds of agent share the graph. Registered agents are real rows
+ * (`agents`) watching the live containers assigned to them. The seeded demo
+ * fleet has no agent, so one is *derived* per seed container and wired into a
+ * ring — labelled "demo" so nobody mistakes it for a running process.
  */
 
 export type NodeHealth = "healthy" | "degraded" | "down" | "unknown";
 
-export type ServiceStatus = "running" | "stopped" | "crashed";
+import type { ContainerStatus } from "./container-status";
+
+export type ServiceStatus = ContainerStatus;
 
 /** `seed` = the demo fleet from the seed scripts; `live` = registered by an agent. */
 export type ContainerSource = "seed" | "live";
 
 export type TopologyNode = {
-  /** `c:<containerId>` for a service, `a:<containerId>` for its agent. */
+  /**
+   * `c:<containerId>` for a service · `a:<agentId>` for a real, registered
+   * agent · `d:<containerId>` for the demo agent derived from a seeded row.
+   */
   id: string;
   kind: "service" | "agent";
   name: string;

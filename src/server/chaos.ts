@@ -21,7 +21,9 @@ export async function injectFault(
     .select()
     .from(schema.containers)
     .where(eq(schema.containers.id, containerId));
-  if (!container) return null;
+  // Only the seeded fleet can be crashed on paper — a live container's state
+  // is the agent's to report, so faking it would put a lie on the timeline.
+  if (!container || container.source !== "seed") return null;
 
   // Demos accumulate; keep the newest few chaos incidents and drop the rest
   // so the timeline doesn't fill with identical scripted faults.

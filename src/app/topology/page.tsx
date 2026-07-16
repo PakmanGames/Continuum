@@ -50,8 +50,11 @@ export default function TopologyPage() {
   const active = activeId ? (byId.get(activeId) ?? null) : null;
 
   const services = topology?.nodes.filter((n) => n.kind === "service") ?? [];
+  const agentCount = topology?.nodes.filter((n) => n.kind === "agent").length ?? 0;
+  // The simulated demo writes fake rows, so it only ever targets the seeded
+  // fleet; live containers get real commands (Live mode, M3).
   const healthyServices = services
-    .filter((s) => s.status === "running")
+    .filter((s) => s.status === "running" && s.source === "seed")
     .map((s) => ({ id: s.id, name: s.name }));
   const unhealthy =
     topology?.nodes.filter((n) => n.health !== "healthy").length ?? 0;
@@ -65,14 +68,15 @@ export default function TopologyPage() {
               Topology
             </h1>
             <p className="text-muted mt-1 text-sm">
-              Each agent watches its service and the next agent in the ring, so
-              no agent goes unobserved.
+              Real agents watch the containers they registered; the seeded demo
+              fleet has a derived agent each, wired into a ring so none goes
+              unobserved.
             </p>
           </div>
           {topology && (
             <div className="text-subtle flex items-center gap-2 font-mono text-xs">
               <Pulse tone={unhealthy > 0 ? "warning" : "success"} />
-              {services.length} services · {services.length} agents ·{" "}
+              {services.length} services · {agentCount} agents ·{" "}
               {topology.edges.length} links
               <span className="text-subtle">
                 · {new Date(topology.generatedAt).toLocaleTimeString()}

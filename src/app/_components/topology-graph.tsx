@@ -34,12 +34,22 @@ const LEGEND: { health: NodeHealth; label: string }[] = [
 
 type Point = { x: number; y: number };
 
-function onRing(index: number, count: number, radius: number): Point {
-  const angle = -Math.PI / 2 + (index / count) * Math.PI * 2;
-  return {
-    x: CENTER + radius * Math.cos(angle),
-    y: CENTER + radius * Math.sin(angle),
-  };
+const onRing = (index: number, count: number): number =>
+  -Math.PI / 2 + (index / count) * Math.PI * 2;
+
+const at = (angle: number, radius: number): Point => ({
+  x: CENTER + radius * Math.cos(angle),
+  y: CENTER + radius * Math.sin(angle),
+});
+
+/**
+ * Circular mean of the angles an agent watches, so a demo agent sits directly
+ * inside its one service and a real agent sits between the several it watches.
+ */
+function centroidAngle(angles: number[]): number {
+  const x = angles.reduce((s, a) => s + Math.cos(a), 0);
+  const y = angles.reduce((s, a) => s + Math.sin(a), 0);
+  return Math.atan2(y, x);
 }
 
 /** Pulls an edge endpoint back to the node's rim so the arrowhead stays visible. */
@@ -51,9 +61,10 @@ function towards(from: Point, to: Point, stopShort: number): Point {
 }
 
 /**
- * The agent mesh as a ring: services on the outside, their agents inside, with
- * a spoke from each agent to its service and a chord to the next agent. Arrows
- * point from watcher to watched. Healthy nodes carry the heartbeat ping.
+ * Services on the outer ring; each agent on the inner ring at the circular mean
+ * of the services it watches — directly inside its service for the demo ring,
+ * between its containers for a real agent. Arrows point from watcher to
+ * watched. Healthy nodes carry the heartbeat ping.
  *
  * Hand-rolled SVG — a ring is a ring, and a force-directed library would spend
  * its weight fighting the layout the topology already implies.
@@ -71,14 +82,22 @@ export function TopologyGraph({
   onSelect: (id: string) => void;
 }) {
   const services = topology.nodes.filter((n) => n.kind === "service");
+  const agents = topology.nodes.filter((n) => n.kind === "agent");
 
+  const angleOf = new Map<string, number>();
   const positions = new Map<string, Point>();
   services.forEach((service, i) => {
-    positions.set(service.id, onRing(i, services.length, SERVICE_RING));
-    positions.set(
-      `a:${service.id.slice(2)}`,
-      onRing(i, services.length, AGENT_RING),
-    );
+    const angle = onRing(i, services.length);
+    angleOf.set(service.id, angle);
+    positions.set(service.id, at(angle, SERVICE_RING));
+  });
+  agents.forEach((agent, i) => {
+    const watched = agent.watches
+      .map((id) => angleOf.get(id))
+      .filter((a): a is number => a !== undefined);
+    // An agent watching nothing still gets a seat, spread evenly.
+    const angle = watched.length ? centroidAngle(watched) : onRing(i, agents.length);
+    positions.set(agent.id, at(angle, AGENT_RING));
   });
 
   const isActive = (id: string) => id === activeId;
@@ -94,7 +113,7 @@ export function TopologyGraph({
           viewBox={`0 0 ${SIZE} ${SIZE}`}
           className="h-auto w-full"
           role="img"
-          aria-label={`Topology: ${services.length} services, ${services.length} agents, ${topology.edges.length} watch links`}
+          aria-label={`Topology: ${services.length} services, ${agents.length} agents, ${topology.edges.length} watch links`}
           onMouseLeave={() => onHover(null)}
         >
           <style>{`
