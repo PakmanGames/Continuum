@@ -83,15 +83,18 @@ holdover from the original hackathon project name.
 
 ### Data model note
 
-The schema predates the topology view and does not capture the agent mesh. There is
-no `agents` table and no record of which agent watches which container: a
-`containers` row is also the identity the Python agent heartbeats under, and the
-agent's targets (`TARGET_CONTAINERS`) never reach the database. `GET /api/topology`
-therefore **derives** one agent per container and a ring of watch relationships at
-request time — see `src/lib/topology.ts`, which is the seam to replace. A future
-schema revision should model agents and watch relationships explicitly so that
-topologies other than a ring, and agents that watch several targets, become data
-rather than code.
+Agents are first-class since migration `0002`: `HW12_agent` holds each registered
+agent (its `lastSeen` is bumped on every call it makes), `HW12_container.agentId`
+records who watches a container, and `HW12_agent_command` is the queue the control
+plane uses to ask an agent to `kill` / `stop` / `start` / `restart` one. An agent
+announces itself and its targets with `POST /api/agent/register` (idempotent, upserts
+by name) and polls `GET /api/agent/commands?agentId=` for work.
+
+Seeded rows (`source = seed`) have no agent. For those, `GET /api/topology` still
+**derives** a demo agent per container, wired into a ring, and labels it "demo" — the
+seam is `src/lib/topology.ts`. A watch relationship is currently one agent per
+container; agents watching each other, or several agents per container, would need
+a separate `watches` table.
 
 ### `db:push` vs `db:generate` + `db:migrate`
 

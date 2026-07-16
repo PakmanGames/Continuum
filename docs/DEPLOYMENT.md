@@ -399,6 +399,12 @@ Its configuration (`agent/.env.example`) includes:
 | `TARGET_CONTAINERS` | Comma-separated Docker container names to watch |
 | `GIT_REPO_URL` | (Optional) repo the agent clones for deeper analysis |
 
+On start the agent calls `POST /api/agent/register` with its name and the container
+names it watches; the control plane creates them as `live` rows and returns the ids
+the agent uses for heartbeats and incidents. Commands from the UI (chaos, reset)
+reach the agent through `GET /api/agent/commands`, which it polls — the agent never
+needs an inbound port.
+
 `agent/docker-compose.yml` also brings up a three-container demo fleet
 (`demo-database`, `demo-backend`, `demo-frontend`) built from the
 `examples/demo-1` submodule — run `git submodule update --init examples/demo-1`

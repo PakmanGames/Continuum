@@ -111,7 +111,7 @@ flowchart LR
   <img src="./public/readme/topology.jpg" alt="The topology view: four services on an outer ring, their agents inside, arrows from each agent to the service and the next agent it watches." width="880" />
 </p>
 
-**The mesh.** Every service has an agent, and the agents form a ring: each one watches its own service *and the next agent*, so no agent is unobserved and there is no single supervisor to lose. The topology view derives this ring from the fleet and colours each node by health — a service by its latest check-in and open incidents, an agent by how recently it reported.
+**The mesh.** A running agent registers itself and the containers it watches, and the topology draws exactly that: real edges from each agent to its containers, coloured by health — a service by its latest check-in and open incidents, an agent by how recently it reported. The seeded demo fleet has no agent process, so the view derives one per container and wires them into a ring (each watching its service *and the next agent*), labelled "demo" so it is never mistaken for a live process. Commands from the UI reach an agent through a queue it polls, so agents never need an inbound port.
 
 **Deployment.** The web app runs on Vercel; Postgres runs on Railway; agents run wherever your containers do (any host with Docker). See [DEPLOYMENT.md](./docs/DEPLOYMENT.md).
 
