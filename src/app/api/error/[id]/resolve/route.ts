@@ -11,7 +11,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             .update(schema.errors)
             .set({ 
                 resolved: true,
-                resolvedAt: sql`NOW()`
+                resolvedAt: sql`NOW()`,
+                resolvedBy: "human",
             })
             .where(eq(schema.errors.id, parseInt(id)))
             .returning();
