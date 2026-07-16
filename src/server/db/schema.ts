@@ -12,9 +12,26 @@ import { pgTableCreator } from "drizzle-orm/pg-core";
  */
 export const createTable = pgTableCreator((name) => `HW12_${name}`);
 
+/**
+ * A running agent process. Live containers point at the agent that registered
+ * them, which is how the topology knows who watches what; `lastSeen` is bumped
+ * on every authenticated call the agent makes, so it doubles as the agent's
+ * own heartbeat.
+ */
+export const agents = createTable("agent", (d) => ({
+  id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+  name: d.varchar({ length: 256 }).notNull().unique(),
+  lastSeen: d.timestamp({ withTimezone: true }),
+  createdAt: d
+    .timestamp({ withTimezone: true })
+    .default(sql`NOW()`)
+    .notNull(),
+}));
+
 export const containers = createTable("container", (d) => ({
   id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-  name: d.varchar({ length: 256 }).notNull(),
+  // Unique so `register` can upsert by name — a container is its Docker name.
+  name: d.varchar({ length: 256 }).notNull().unique(),
   /**
    * Where the row came from. `seed` rows are the demo fleet the seed scripts
    * create; `live` rows are registered by a running agent. The topology labels
@@ -22,6 +39,8 @@ export const containers = createTable("container", (d) => ({
    * without pretending the seeded fleet is real.
    */
   source: d.varchar({ length: 8 }).default("live").notNull(),
+  /** The agent watching this container. Null for seeded demo rows. */
+  agentId: d.integer().references(() => agents.id, { onDelete: "set null" }),
   createdAt: d
     .timestamp({ withTimezone: true })
     .default(sql`NOW()`)
@@ -54,6 +73,10 @@ export const errors = createTable("error", (d) => ({
   suggestedFix: d.varchar({ length: 4096 }).notNull(),
   resolved: d.boolean().default(false).notNull(),
   resolvedAt: d.timestamp({ withTimezone: true }),
+  /** "agent" when the remediation loop closed it, "human" when someone clicked. */
+  resolvedBy: d.varchar({ length: 16 }),
+  /** What closed it, e.g. "restart" — the honest label the UI shows. */
+  resolution: d.varchar({ length: 1024 }),
   occurredAt: d
     .timestamp({ withTimezone: true })
     .default(sql`NOW()`)
@@ -87,4 +110,32 @@ export const waitlist = createTable("waitlist", (d) => ({
     .timestamp({ withTimezone: true })
     .default(sql`NOW()`)
     .notNull(),
+}));
+
+/**
+ * Work the control plane asks an agent to do. Agents sit behind NAT, so the
+ * backend cannot push — the agent polls for `pending` rows and acks them
+ * `done` or `failed`. This is how the UI drives a real container: the chaos
+ * panel enqueues `kill`, the Reset button enqueues `restart`.
+ */
+export const agentCommands = createTable("agent_command", (d) => ({
+  id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+  agentId: d
+    .integer()
+    .notNull()
+    .references(() => agents.id, { onDelete: "cascade" }),
+  containerId: d
+    .integer()
+    .notNull()
+    .references(() => containers.id, { onDelete: "cascade" }),
+  /** kill · stop · start · restart */
+  action: d.varchar({ length: 16 }).notNull(),
+  /** pending · done · failed */
+  status: d.varchar({ length: 16 }).default("pending").notNull(),
+  result: d.varchar({ length: 1024 }),
+  createdAt: d
+    .timestamp({ withTimezone: true })
+    .default(sql`NOW()`)
+    .notNull(),
+  completedAt: d.timestamp({ withTimezone: true }),
 }));
