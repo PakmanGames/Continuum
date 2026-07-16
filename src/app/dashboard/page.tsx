@@ -13,11 +13,15 @@ import {
 import { cn } from "~/lib/cn";
 import { relativeTime } from "~/lib/time";
 import {
+  STATUS_HEALTH,
+  STATUS_LABEL,
+  type ContainerStatus,
+} from "~/lib/container-status";
+import {
   Card,
   Pulse,
   StatTile,
   StatusPill,
-  type Status,
 } from "../_components/ui";
 import { IncidentsChart } from "../_components/incidents-chart";
 import { PageTransition } from "../_components/page-transition";
@@ -46,22 +50,10 @@ type IncidentRow = {
 type FleetServer = {
   id: string;
   name: string;
-  status: "running" | "stopped" | "crashed";
+  status: ContainerStatus;
   cpu: number;
   memory: number;
   updatedAt: string;
-};
-
-const STATUS_PILL: Record<FleetServer["status"], Status> = {
-  running: "healthy",
-  crashed: "down",
-  stopped: "unknown",
-};
-
-const STATUS_LABEL: Record<FleetServer["status"], string> = {
-  running: "Running",
-  crashed: "Crashed",
-  stopped: "Stopped",
 };
 
 /** Mean time to resolve, in minutes, over incidents that actually closed. */
@@ -316,7 +308,7 @@ export default function DashboardPage() {
                           {server.name}
                         </span>
                         <StatusPill
-                          status={STATUS_PILL[server.status]}
+                          status={STATUS_HEALTH[server.status]}
                           label={STATUS_LABEL[server.status]}
                         />
                       </div>
@@ -329,9 +321,9 @@ export default function DashboardPage() {
                     <span
                       className={cn(
                         "h-8 w-1 shrink-0 rounded-full",
-                        server.status === "running"
+                        STATUS_HEALTH[server.status] === "healthy"
                           ? "bg-success"
-                          : server.status === "crashed"
+                          : STATUS_HEALTH[server.status] === "down"
                             ? "bg-danger"
                             : "bg-border",
                       )}

@@ -4,23 +4,12 @@ import { z } from "zod";
 import { db } from "~/server/db";
 import * as schema from "~/server/db/schema";
 import { requireAgent } from "~/server/agent-auth";
-
-/** Docker's container states, plus the two the seed scripts use. */
-const CONTAINER_STATUS = [
-  "running",
-  "exited",
-  "restarting",
-  "dead",
-  "paused",
-  "created",
-  "stopped",
-  "crashed",
-] as const;
+import { CONTAINER_STATUSES } from "~/lib/container-status";
 
 const heartbeatPayload = z
   .object({
     containerId: z.number().int().positive(),
-    status: z.enum(CONTAINER_STATUS).default("running"),
+    status: z.enum(CONTAINER_STATUSES).default("running"),
     checkedInAt: z.union([z.string().datetime(), z.number()]).optional(),
     // The Python agent historically sent `timestamp`; accept it as an alias
     // so an un-upgraded agent's clock is no longer silently discarded.

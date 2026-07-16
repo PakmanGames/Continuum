@@ -6,6 +6,11 @@ import { RefreshCw, Server as ServerIcon } from "lucide-react";
 import { cn } from "~/lib/cn";
 import { relativeTime } from "~/lib/time";
 import {
+  STATUS_HEALTH,
+  STATUS_LABEL,
+  type ContainerStatus,
+} from "~/lib/container-status";
+import {
   Button,
   Card,
   StatTile,
@@ -16,7 +21,6 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
-  type Status,
 } from "../_components/ui";
 import { PageTransition } from "../_components/page-transition";
 
@@ -24,23 +28,10 @@ import { PageTransition } from "../_components/page-transition";
 type FleetServer = {
   id: string;
   name: string;
-  status: "running" | "stopped" | "crashed";
+  status: ContainerStatus;
   cpu: number;
   memory: number;
   updatedAt: string;
-};
-
-/** Container state maps onto the shared health vocabulary of StatusPill. */
-const STATUS_PILL: Record<FleetServer["status"], Status> = {
-  running: "healthy",
-  crashed: "down",
-  stopped: "unknown",
-};
-
-const STATUS_LABEL: Record<FleetServer["status"], string> = {
-  running: "Running",
-  crashed: "Crashed",
-  stopped: "Stopped",
 };
 
 /**
@@ -260,7 +251,7 @@ export default function ServersPage() {
                     </TableCell>
                     <TableCell>
                       <StatusPill
-                        status={STATUS_PILL[server.status]}
+                        status={STATUS_HEALTH[server.status]}
                         label={STATUS_LABEL[server.status]}
                       />
                     </TableCell>

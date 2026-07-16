@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { desc, eq, sql } from "drizzle-orm";
 import { late } from "zod";
 import { containerMetrics } from "~/lib/metrics";
+import type { ContainerStatus } from "~/lib/container-status";
 
 export async function GET(request: Request) {
   try {
@@ -21,8 +22,7 @@ export async function GET(request: Request) {
           .limit(1);
 
         const status =
-          (latestStatus[0]?.status as "running" | "stopped" | "crashed") ??
-          "stopped";
+          (latestStatus[0]?.status as ContainerStatus | undefined) ?? "stopped";
 
         // Only a live container consumes anything — a stopped or crashed one
         // reporting 60% CPU reads as obviously fake. Running containers get
