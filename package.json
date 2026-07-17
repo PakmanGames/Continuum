@@ -27,7 +27,7 @@
     "@t3-oss/env-nextjs": "^0.12.0",
     "drizzle-orm": "^0.41.0",
     "lucide-react": "^0.554.0",
-    "next": "^15.2.3",
+    "next": "15.2.8",
     "postgres": "^3.4.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
