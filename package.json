@@ -13,6 +13,7 @@
     "db:seed-historical": "tsx --env-file=.env src/scripts/seed-historical-incidents.ts",
     "db:seed-heartbeats": "tsx --env-file=.env src/scripts/seed-heartbeats.ts",
     "db:chaos-reset": "tsx --env-file=.env src/scripts/chaos-reset.ts && pnpm db:seed-heartbeats",
+    "db:live-reset": "tsx --env-file=.env src/scripts/live-reset.ts",
     "dev": "next dev --turbo",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
