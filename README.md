@@ -10,7 +10,7 @@ It watches your containers, diagnoses failures with an LLM, and escalates to a h
 <p align="center">
   <a href="https://continuum.apak.ca">Live site</a> ·
   <a href="./docs/DEPLOYMENT.md">Deploy it</a> ·
-  <a href="./docs/SCRIPTS.md">Scripts reference</a>
+  <a href="./agent">Run the agent</a>
 </p>
 
 <p align="center">
@@ -22,7 +22,8 @@ It watches your containers, diagnoses failures with an LLM, and escalates to a h
 ## What it does
 
 - **Watches.** A lightweight Python agent runs beside your containers, tails their logs and state, and heartbeats to the control plane.
-- **Diagnoses.** When a container fails, the agent sends the evidence to Gemini and gets back a plain-English explanation and a proposed fix — not a wall of logs.
+- **Diagnoses.** When a container fails, the agent sends the evidence to an LLM — any OpenAI-compatible endpoint — and gets back a plain-English explanation and a proposed fix, not a wall of logs.
+- **Heals.** Crash-class failures are restarted, watched for a verification window, and the incident is closed by the agent with what it did. The proposed code fix is shown, not applied.
 - **Escalates.** If a human needs to be in the loop, Continuum phones whoever is on the on-call roster with a spoken summary of the incident.
 - **Shows you the mesh.** A live topology view draws every service, the agent watching it, and the agent watching *that* agent — so a dead watcher is itself noticed.
 
@@ -36,7 +37,9 @@ Once signed in, the thirty-second tour is **`/topology`**: pick a healthy servic
 inject  →  detect  →  diagnose  →  heal
 ```
 
-The node turns red on the live graph within two seconds, the agent's diagnosis and proposed fix appear as they're "produced", and the service heals. It's a scripted simulation and labelled as one — no container is touched — but it writes the same rows a real agent would, so the incident lands on the timeline and the dashboard's mean-time-to-resolve moves for real.
+The node turns red on the live graph within two seconds, the agent's diagnosis and proposed fix appear as they're "produced", and the service heals. Against the seeded demo fleet this is a scripted simulation and labelled as one — no container is touched — but it writes the same rows a real agent would, so the incident lands on the timeline and the dashboard's mean-time-to-resolve moves for real.
+
+**Run it for real.** With Docker installed, copy `agent/.env.example` to `agent/.env`, set the same `AGENT_TOKEN` as the app, and `docker compose up -d` in [`agent/`](./agent) starts a three-container demo app and an agent watching it. The chaos panel switches to **Live containers**: *Kill container* sends a real `kill` through the command queue, the agent sees the container die, files the incident with its diagnosis, restarts it, verifies it stays up, and closes the incident — every step on screen is something that actually happened. Without an LLM key the diagnosis says so and the loop still runs; with `LLM_*` set it's real. When you're done, `docker compose down` and `pnpm db:live-reset`. Every agent setting is documented in [`agent/.env.example`](./agent/.env.example).
 
 <table>
   <tr>
@@ -71,8 +74,12 @@ sequenceDiagram
     A->>API: POST /api/agent/data-ingest
     API->>DB: store incident
     API->>T: voice call to on-call (optional)
+    A->>C: docker restart, verify healthy
+    A->>API: POST /api/agent/incidents/:id/resolve
     UI->>API: poll every 2–5s
     API-->>UI: fleet, incidents, topology
+    UI->>API: POST /api/commands (kill / restart)
+    A->>API: GET /api/agent/commands (poll)
 ```
 
 The control plane is deliberately boring: Next.js route handlers in front of Postgres, polled by the UI. There is no long-lived socket to keep alive on serverless, and every screen re-derives its state from the database, which is what lets the chaos demo, the seed scripts, and a real agent all drive the same UI.
@@ -127,7 +134,7 @@ flowchart LR
 | Styling | Tailwind v4 with a token-driven design system | Light and dark palettes from one set of semantic tokens |
 | Auth | Clerk | Drop-in sessions and route protection |
 | Data | Postgres via Drizzle ORM (`postgres-js`) | Typed schema, plain wire protocol — works with any provider |
-| Agent | Python, Docker SDK, Gemini | Small enough to run beside every container |
+| Agent | Python, the Docker CLI, any OpenAI-compatible LLM | One small process beside your containers; no inbound port, no provider lock-in |
 | Escalation | Twilio | A phone call is the one alert nobody filters |
 | Hosting | Vercel + Railway | Auto-deploys from `main`; always-on database |
 
@@ -144,7 +151,7 @@ pnpm db:seed-heartbeats     # check-ins, so the fleet reads as alive
 pnpm dev                    # http://localhost:3000
 ```
 
-Every script — what it does and which ones write to the database — is in [SCRIPTS.md](./docs/SCRIPTS.md). Before recording or demoing, `pnpm db:chaos-reset` puts the seeded fleet back to its starting state.
+All `db:*` scripts act on whatever database `POSTGRES_URL` points at. Before recording or demoing, `pnpm db:chaos-reset` puts the seeded fleet back to its starting state and `pnpm db:live-reset` forgets any previous live agent.
 
 To run a real agent against your containers, see [`agent/`](./agent): set the same `AGENT_TOKEN` on both sides, point `AGENT_BACKEND_URL` at your control plane, and `docker compose up` brings up the agent alongside a three-container demo fleet to watch.
 
@@ -158,7 +165,7 @@ src/app/            pages and API routes (App Router)
 src/lib/            metrics, topology and chaos contracts, shared helpers
 src/server/         database client and chaos demo logic
 src/scripts/        seed and reset scripts
-agent/              the Python agent and its Dockerfile
+agent/              the Python agent (register · heartbeat · commands · heal · LLM adapter), its Dockerfile, and a compose file with a demo fleet
 docs/               deployment guide, scripts reference
 ```
 
@@ -166,12 +173,11 @@ docs/               deployment guide, scripts reference
 
 Continuum started as a hackathon project and the surface area is deliberately small. The things below are where the depth goes next, roughly in order:
 
-- **Auto-remediation with rollback.** Today the agent proposes a fix; next it applies one with a guarded rollback and a one-click approval path.
+- **Patch-apply with approval.** Today the agent heals by restart and proposes a code fix; next it applies that patch after a one-click approval, rebuilds, and rolls back if the service doesn't come up.
 - **A real gossip mesh.** The ring is modelled and visualized now; the next step is agents that actually respawn a dead peer.
 - **First-class agents in the schema.** The topology is derived from the container list. Modelling agents and watch relationships explicitly unlocks arbitrary topologies and multi-target agents.
 - **Container telemetry.** CPU and memory are synthesized until the agent reports `docker stats` with each heartbeat.
 - **Narrated escalation calls.** ElevenLabs audio is generated today but Twilio still speaks the alert itself; serving the generated audio to the call is the missing piece.
-- **Bring your own model.** The diagnosis step is a single seam in the agent. It will accept any OpenAI-compatible endpoint — OpenAI, Gemini, Anthropic, Groq, a local model — through `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL`, instead of being tied to one provider.
 - **Public status page** and moving the agent mesh onto always-on compute alongside the database.
 
 ## Origins

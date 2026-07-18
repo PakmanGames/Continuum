@@ -295,7 +295,10 @@ Walk the end-to-end path, not just "the page loaded":
    should draw with the seeded fleet. Pick a running service in the chaos panel
    and inject a fault — the node should turn red within two seconds and heal a
    few seconds later. This exercises the database round-trip both ways. Run
-   `pnpm db:chaos-reset` afterwards if you want the seeded state back.
+   `pnpm db:chaos-reset` afterwards if you want the seeded state back. With
+   `AGENT_TOKEN` set on the deployment and an agent pointed at it, the panel
+   offers **Live containers** as well and the same click drives a real container
+   (see [The agent service](#appendix-the-agent-service)).
 5. **On-call roster.** Open `/user`, add a person, then remove them via the inline
    confirm. Both go through server actions straight to the database, so this is
    the quickest write-path check that doesn't touch the fleet.
@@ -392,12 +395,18 @@ Its configuration (`agent/.env.example`) includes:
 
 | Variable | Purpose |
 | --- | --- |
-| `GENAI_API_KEY` | Google Gemini API key. Without it the agent still detects and reports; diagnoses read "unavailable". |
 | `AGENT_BACKEND_URL` | URL of this web app. From inside Docker Desktop a laptop `pnpm dev` is `http://host.docker.internal:3000`, not `localhost`. |
 | `AGENT_TOKEN` | Must equal the control plane's `AGENT_TOKEN`. |
-| `AGENT_ID` | Identifier for this agent instance |
-| `TARGET_CONTAINERS` | Comma-separated Docker container names to watch |
-| `GIT_REPO_URL` | (Optional) repo the agent clones for deeper analysis |
+| `AGENT_NAME` | How the agent appears on the topology (default `agent-local`). |
+| `TARGET_CONTAINERS` | Comma-separated Docker container names to watch. |
+| `LLM_API_KEY` / `LLM_MODEL` / `LLM_BASE_URL` | Any OpenAI-compatible endpoint (OpenAI by default; Gemini, Anthropic, Groq, Ollama all work). Without a key the agent still detects, heals and reports; the diagnosis says no LLM is configured. |
+| `LLM_CONTEXT_KB` | Cap on source code sent with a diagnosis (default 64). |
+| `REMEDIATION` | `restart` (default) or `none`. |
+| `HEAL_VERIFY_S` | Seconds a restarted container must stay up before the incident is closed (default 15). |
+
+A watched container may carry a `GIT_REPO_URL` environment variable; the agent then
+clones it (public repos, or private ones if the agent has credentials) and sends a
+capped slice of the source with the diagnosis. Clone failures are logged and skipped.
 
 On start the agent calls `POST /api/agent/register` with its name and the container
 names it watches; the control plane creates them as `live` rows and returns the ids
