@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const suggestedFix =
       payload.suggestedFix ?? "No suggested fix provided by the agent.";
 
-    await db.insert(schema.errors).values({
+    const [inserted] = await db.insert(schema.errors).values({
       agentId: payload.agentId,
       containerId: payload.containerId,
       serviceName: payload.serviceName,
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       suggestedFix:
         payload.suggestedFix ?? "No suggested fix provided by the agent.",
       occurredAt,
-    });
+    }).returning({ id: schema.errors.id });
 
     // Optional: Generate audio with ElevenLabs and make Twilio call
     let audioSize = 0;
@@ -127,6 +127,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message: "Data ingested successfully",
+        incidentId: inserted!.id,
         audioGenerated: audioSize > 0,
         audioSize,
         callSid,

@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { db } from "~/server/db";
 import * as schema from "~/server/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { userId } = await auth();
+    if (!userId) {
+        return NextResponse.json({ error: "Sign in to resolve incidents." }, { status: 401 });
+    }
     try {
         const { id } = await params;
         // Update the error to mark it as resolved
