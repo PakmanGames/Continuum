@@ -51,11 +51,6 @@ export default function TopologyPage() {
 
   const services = topology?.nodes.filter((n) => n.kind === "service") ?? [];
   const agentCount = topology?.nodes.filter((n) => n.kind === "agent").length ?? 0;
-  // The simulated demo writes fake rows, so it only ever targets the seeded
-  // fleet; live containers get real commands (Live mode, M3).
-  const healthyServices = services
-    .filter((s) => s.status === "running" && s.source === "seed")
-    .map((s) => ({ id: s.id, name: s.name }));
   const unhealthy =
     topology?.nodes.filter((n) => n.health !== "healthy").length ?? 0;
 
@@ -137,7 +132,7 @@ export default function TopologyPage() {
                 pinned={selected !== null && hovered === null}
               />
               <ChaosPanel
-                services={healthyServices}
+                nodes={topology.nodes}
                 onFocus={(id) => {
                   setHovered(null);
                   setSelected(id);
