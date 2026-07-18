@@ -1,4 +1,3 @@
-google-genai
-pydantic
-python-dotenv
-requests
+requests>=2.32
+pydantic>=2.7
+python-dotenv>=1.0

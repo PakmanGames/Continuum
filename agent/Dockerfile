@@ -26,9 +26,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy monitor script(s)
-COPY agent.py .
-
-COPY docker_tools.py .
+COPY agent.py docker_tools.py llm.py context.py ./
 
 # Run the monitor
 CMD ["python", "agent.py"]
