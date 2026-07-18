@@ -45,5 +45,6 @@ yarn-error.log*
 # idea files
 .idea
 
-# private planning doc (keep the rest of docs/ tracked)
+# private working docs (keep the rest of docs/ tracked)
 docs/DEVELOPMENT_PLAN.md
+docs/SCRIPTS.md
