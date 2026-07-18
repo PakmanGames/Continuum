@@ -28,6 +28,8 @@ import { PageTransition } from "../_components/page-transition";
 type FleetServer = {
   id: string;
   name: string;
+  source: "seed" | "live";
+  agentId: number | null;
   status: ContainerStatus;
   cpu: number;
   memory: number;
@@ -85,31 +87,25 @@ export default function ServersPage() {
 
   const handleRefresh = async () => {
     setBusyId("__refresh");
-    try {
-      const response = await fetch("/api/servers/refresh", { method: "POST" });
-      if (!response.ok) throw new Error("Failed to refresh servers");
-      await fetchServers();
-      setNotice("Fleet refreshed");
-    } catch (err) {
-      console.error("Error refreshing servers:", err);
-      setNotice("Could not refresh the fleet");
-    } finally {
-      setBusyId(null);
-    }
+    await fetchServers();
+    setNotice("Fleet refreshed");
+    setBusyId(null);
   };
 
-  const handleReset = async (server: FleetServer) => {
+  /** Queues a real `restart` for the agent watching this container. */
+  const handleRestart = async (server: FleetServer) => {
     setBusyId(server.id);
     try {
-      const response = await fetch(`/api/servers/${server.id}/reset`, {
+      const response = await fetch("/api/commands", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ containerId: Number(server.id), action: "restart" }),
       });
-      if (!response.ok) throw new Error("Failed to reset server");
-      await fetchServers();
-      setNotice(`${server.name} reset`);
+      if (!response.ok) throw new Error("Failed to queue restart");
+      setNotice(`Restart queued for ${server.name}`);
     } catch (err) {
-      console.error("Error resetting server:", err);
-      setNotice(`Could not reset ${server.name}`);
+      console.error("Error queuing restart:", err);
+      setNotice(`Could not queue a restart for ${server.name}`);
     } finally {
       setBusyId(null);
     }
@@ -265,14 +261,18 @@ export default function ServersPage() {
                       {relativeTime(server.updatedAt)}
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => void handleReset(server)}
-                        disabled={busyId !== null}
-                      >
-                        {busyId === server.id ? "Resetting…" : "Reset"}
-                      </Button>
+                      {server.agentId !== null ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void handleRestart(server)}
+                          disabled={busyId !== null}
+                        >
+                          {busyId === server.id ? "Queuing…" : "Restart"}
+                        </Button>
+                      ) : (
+                        <span className="text-subtle text-xs">demo</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

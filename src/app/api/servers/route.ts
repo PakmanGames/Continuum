@@ -35,6 +35,8 @@ export async function GET(request: Request) {
         return {
           id: container.id.toString(),
           name: container.name,
+          source: container.source,
+          agentId: container.agentId,
           status,
           cpu,
           memory,
