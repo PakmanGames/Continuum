@@ -20,6 +20,10 @@ type IncidentRow = {
   suggestedFix: string;
   resolved: boolean;
   resolvedAt: string | null;
+  /** "agent" when the remediation loop closed it, "human" when someone clicked. */
+  resolvedBy: string | null;
+  /** What closed it, e.g. "restart: healthy for 15s". */
+  resolution: string | null;
   occurredAt: string;
 };
 
@@ -115,6 +119,13 @@ export default function IncidentDetailPage({
                   <time dateTime={incident.resolvedAt}>
                     {new Date(incident.resolvedAt).toLocaleString()}
                   </time>
+                  {incident.resolvedBy && ` by ${incident.resolvedBy}`}
+                  {incident.resolution && (
+                    <>
+                      {" · "}
+                      <span className="text-fg font-mono">{incident.resolution}</span>
+                    </>
+                  )}
                 </>
               )}
               {" · agent "}
