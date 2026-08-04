@@ -404,6 +404,10 @@ Its configuration (`agent/.env.example`) includes:
 | `REMEDIATION` | `restart` (default) or `none`. |
 | `HEAL_VERIFY_S` | Seconds a restarted container must stay up before the incident is closed (default 15). |
 
+The demo app's `/crash` endpoint (`curl "http://localhost:5001/crash?value=0"`, or
+the **Trigger Crash** button on `http://localhost:3001`) exits its process on purpose,
+so the agent has a genuine application failure to detect, diagnose and restart.
+
 A watched container may carry a `GIT_REPO_URL` environment variable; the agent then
 clones it (public repos, or private ones if the agent has credentials) and sends a
 capped slice of the source with the diagnosis. Clone failures are logged and skipped.
