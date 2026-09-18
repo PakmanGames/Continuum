@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Pulse } from "./_components/ui/pulse";
 
-const GITHUB_URL = "https://github.com/PakmanGames/continuum-continued";
+const GITHUB_URL = "https://github.com/PakmanGames/Continuum";
 
 const ctaPrimary =
   "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-medium text-accent-contrast transition-all hover:bg-accent-strong hover:shadow-glow";

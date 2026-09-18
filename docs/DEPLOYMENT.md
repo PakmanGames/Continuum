@@ -150,7 +150,7 @@ Pick one fix:
 - **Repo fix:** change the submodule URL to HTTPS:
 
   ```bash
-  git submodule set-url examples/demo-1 https://github.com/PakmanGames/continuum-continued-demo.git
+  git submodule set-url examples/demo-1 https://github.com/PakmanGames/continuum-demo.git
   git commit -am "chore: use HTTPS URL for demo submodule"
   ```
 
@@ -222,7 +222,7 @@ The schema lives in `src/server/db/schema.ts` and all tables are prefixed
 
    ```bash
    git clone <your-repo-url>
-   cd continuum-continued
+   cd Continuum
    pnpm install
    ```
 
