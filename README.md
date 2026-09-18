@@ -115,7 +115,7 @@ flowchart LR
 ```
 
 <p align="center">
-  <img src="./public/readme/topology.jpg" alt="The topology view: four services on an outer ring, their agents inside, arrows from each agent to the service and the next agent it watches." width="880" />
+  <img src="./public/readme/topology.jpg" alt="The topology view: the seeded demo services with a derived agent each, alongside a real agent registered by a running fleet, with arrows from every agent to what it watches." width="880" />
 </p>
 
 **The mesh.** A running agent registers itself and the containers it watches, and the topology draws exactly that: real edges from each agent to its containers, coloured by health — a service by its latest check-in and open incidents, an agent by how recently it reported. The seeded demo fleet has no agent process, so the view derives one per container and wires them into a ring (each watching its service *and the next agent*), labelled "demo" so it is never mistaken for a live process. Commands from the UI reach an agent through a queue it polls, so agents never need an inbound port.
