@@ -59,7 +59,7 @@ sequenceDiagram
     autonumber
     participant C as Container
     participant A as Agent (Python)
-    participant G as Gemini
+    participant G as LLM
     participant API as Control plane (Next.js)
     participant DB as Postgres
     participant UI as Dashboard
@@ -108,7 +108,7 @@ flowchart LR
     end
 
     A1 & A2 & A3 -- "heartbeats + incidents" --> API
-    A1 & A2 & A3 -- diagnosis --> LLM[Gemini]
+    A1 & A2 & A3 -- diagnosis --> LLM["LLM (OpenAI-compatible)"]
     API -- escalation --> PHONE["Twilio voice"]
     USER["on-call engineer"] --> WEB
     PHONE --> USER
@@ -161,12 +161,12 @@ To run a real agent against your containers, see [`agent/`](./agent): set the sa
 src/app/            pages and API routes (App Router)
   dashboard/ topology/ servers/ timeline/ user/   the signed-in app (user = on-call roster)
   _components/      design-system primitives, charts, the topology graph, the chaos panel
-  api/              agent ingest, fleet, incidents, topology, chaos, waitlist
-src/lib/            metrics, topology and chaos contracts, shared helpers
-src/server/         database client and chaos demo logic
+  api/              agent ingest, commands, fleet, incidents, topology, chaos, waitlist
+src/lib/            metrics, topology, command and status contracts, shared helpers
+src/server/         database client, agent token auth, the command queue, chaos demo logic
 src/scripts/        seed and reset scripts
 agent/              the Python agent (register · heartbeat · commands · heal · LLM adapter), its Dockerfile, and a compose file with a demo fleet
-docs/               deployment guide, scripts reference
+docs/               deployment guide
 ```
 
 ## Roadmap
@@ -175,7 +175,7 @@ Continuum started as a hackathon project and the surface area is deliberately sm
 
 - **Patch-apply with approval.** Today the agent heals by restart and proposes a code fix; next it applies that patch after a one-click approval, rebuilds, and rolls back if the service doesn't come up.
 - **A real gossip mesh.** The ring is modelled and visualized now; the next step is agents that actually respawn a dead peer.
-- **First-class agents in the schema.** The topology is derived from the container list. Modelling agents and watch relationships explicitly unlocks arbitrary topologies and multi-target agents.
+- **Stored watch relationships.** Agents are first-class rows now, and a live agent's edges to the containers it watches are real. The agent-watching-agent ring is still derived for display rather than stored, which is the piece a true multi-agent topology needs.
 - **Container telemetry.** CPU and memory are synthesized until the agent reports `docker stats` with each heartbeat.
 - **Narrated escalation calls.** ElevenLabs audio is generated today but Twilio still speaks the alert itself; serving the generated audio to the call is the missing piece.
 - **Public status page** and moving the agent mesh onto always-on compute alongside the database.
